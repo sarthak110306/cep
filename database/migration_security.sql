@@ -1,0 +1,46 @@
+-- ============================================================
+-- Community Hackathon - Security follow-up migration
+-- ============================================================
+-- This migration is OPTIONAL and safe to run on an existing database.
+-- It does NOT touch users, teams, registrations, or any other real data.
+--
+-- How to run it (from the project root, C:\manus code):
+--
+--     mysql -u root -p community_hackathon < database\migration_security.sql
+--
+-- ------------------------------------------------------------
+-- 1. password_reset_tokens table.
+-- ------------------------------------------------------------
+-- This table was used only by the OTP-based password reset feature that
+-- has been reverted/removed from app.py. Nothing in the current code
+-- references it anymore.
+--
+-- Per project owner's instruction, this migration does NOT drop it yet.
+-- Leaving it in place is harmless - it holds no data other than
+-- short-lived, already-hashed OTP codes, and no code reads or writes to
+-- it anymore. Whether to remove it will be decided separately in a later
+-- round, after the rest of the project has been reviewed.
+--
+-- If/when you do want to remove it, the statement would simply be:
+--   DROP TABLE IF EXISTS password_reset_tokens;
+-- (not included/run here on purpose).
+
+-- ------------------------------------------------------------
+-- 2. Default admin account (Issue #4).
+-- ------------------------------------------------------------
+-- No SQL is provided here on purpose. The previous default admin
+-- (admin@hackathon.local / admin123, a publicly-documented weak password)
+-- has been removed from database/schema.sql so it is no longer inserted
+-- on fresh installs.
+--
+-- If your EXISTING database still has that default admin row (check with:
+--   SELECT id, name, email FROM admins WHERE email = 'admin@hackathon.local';
+-- ), do NOT delete it blindly - it may already be the account you use.
+-- Instead, change its password to something only you know by running, from
+-- the project root:
+--
+--     python create_admin.py
+--
+-- and entering admin@hackathon.local (or whatever email you actually use)
+-- when prompted - the script detects the existing row and offers to update
+-- its password in place rather than creating a duplicate account.

@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ — Community Hackathon for Social Innovation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#07120f;
+    --bg-panel:#0c1c17;
+    --bg-card:#102821;
+    --border:rgba(255,255,255,0.08);
+    --accent:#3ddc97;
+    --accent-soft:#f0a860;
+    --text:#e9f5f0;
+    --text-dim:#8fa89e;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    position:relative;
+    overflow-x:hidden;
+}
+
+body::before{
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none;
+    z-index:0;
+}
+
+/* ===== Nav ===== */
+nav{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(12,28,23,0.75);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:16px;
+    text-align:center;
+}
+
+nav a{
+    color:var(--text-dim);
+    text-decoration:none;
+    margin:0 6px;
+    font-weight:500;
+    font-size:13.5px;
+    padding:9px 16px;
+    border-radius:8px;
+    transition:all 0.2s ease;
+}
+
+nav a:hover, nav a.active{
+    color:var(--text);
+    background:rgba(255,255,255,0.06);
+}
+
+nav a.active{
+    color:#07231a;
+    background:var(--accent);
+    font-weight:600;
+}
+
+/* ===== Hero ===== */
+.hero{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:90px 20px 50px;
+    background: radial-gradient(ellipse at top, rgba(61,220,151,0.14), transparent 60%),
+                linear-gradient(180deg,#0a1a15,#07120f);
+    border-bottom:1px solid var(--border);
+}
+
+.hero .badge{
+    display:inline-block;
+    font-size:11.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:20px;
+    padding:7px 16px;
+    border:1px solid rgba(61,220,151,0.35);
+    border-radius:30px;
+}
+
+.hero h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:44px;
+    font-weight:700;
+    letter-spacing:-1px;
+    max-width:700px;
+    margin:0 auto 16px;
+    line-height:1.15;
+    background:linear-gradient(90deg,#e9f5f0,#3ddc97 60%,#f0a860);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero p{
+    font-size:16px;
+    color:var(--text-dim);
+    max-width:540px;
+    margin:0 auto 36px;
+    letter-spacing:0.3px;
+}
+
+.search-wrap{
+    max-width:520px;
+    margin:0 auto;
+    position:relative;
+}
+
+.search-wrap input{
+    width:100%;
+    padding:15px 20px 15px 48px;
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(10px);
+    color:var(--text);
+    font-size:15px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+}
+
+.search-wrap input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px rgba(61,220,151,0.12);
+}
+
+.search-wrap input::placeholder{ color:#587268; }
+
+.search-wrap svg{
+    position:absolute;
+    left:18px;
+    top:50%;
+    transform:translateY(-50%);
+    width:18px;
+    height:18px;
+    stroke:var(--text-dim);
+}
+
+/* ===== Filters ===== */
+.filters{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:10px;
+    padding:40px 20px 10px;
+    position:relative;
+    z-index:1;
+}
+
+.filter-btn{
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    padding:10px 20px;
+    border-radius:30px;
+    font-size:13.5px;
+    font-weight:500;
+    font-family:inherit;
+    cursor:pointer;
+    transition:all .25s ease;
+}
+
+.filter-btn:hover{
+    border-color:rgba(61,220,151,0.4);
+    color:var(--text);
+}
+
+.filter-btn.active{
+    background:linear-gradient(90deg,var(--accent),#7fedbf);
+    color:#07231a;
+    border-color:transparent;
+    font-weight:700;
+    box-shadow:0 8px 20px rgba(61,220,151,0.25);
+}
+
+/* ===== FAQ section ===== */
+.faq-section{
+    position:relative;
+    z-index:1;
+    max-width:800px;
+    margin:50px auto;
+    padding:0 20px;
+}
+
+.faq-item{
+    background:rgba(16,40,33,0.55);
+    border:1px solid var(--border);
+    border-radius:16px;
+    margin-bottom:16px;
+    backdrop-filter:blur(12px);
+    overflow:hidden;
+    opacity:0;
+    transform:translateY(20px);
+    transition:border-color .3s ease, box-shadow .3s ease;
+}
+
+.faq-item.reveal{
+    animation:itemIn .5s ease forwards;
+}
+
+@keyframes itemIn{
+    to{ opacity:1; transform:translateY(0); }
+}
+
+.faq-item:hover{
+    border-color:rgba(61,220,151,0.3);
+}
+
+.faq-item.open{
+    border-color:rgba(61,220,151,0.45);
+    box-shadow:0 14px 32px rgba(61,220,151,0.14);
+}
+
+.faq-question{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    padding:22px 26px;
+    cursor:pointer;
+}
+
+.faq-question-text{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.faq-cat{
+    align-self:flex-start;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.4px;
+    text-transform:uppercase;
+    color:var(--accent-soft);
+    background:rgba(240,168,96,0.1);
+    border:1px solid rgba(240,168,96,0.3);
+    padding:4px 10px;
+    border-radius:20px;
+}
+
+.faq-question-text h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:16px;
+    font-weight:600;
+    color:var(--text);
+    line-height:1.4;
+}
+
+.faq-toggle{
+    flex-shrink:0;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:rgba(61,220,151,0.1);
+    border:1px solid rgba(61,220,151,0.3);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent);
+    font-size:18px;
+    font-weight:600;
+    transition:transform .3s ease, background .3s ease;
+}
+
+.faq-item.open .faq-toggle{
+    transform:rotate(135deg);
+    background:linear-gradient(90deg,var(--accent),#7fedbf);
+    color:#07231a;
+}
+
+.faq-answer{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .4s ease;
+}
+
+.faq-answer-inner{
+    padding:0 26px 24px;
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.7;
+}
+
+.no-results{
+    display:none;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:15px;
+    padding:50px 0;
+}
+
+/* ===== Ask personal question ===== */
+.ask-section{
+    position:relative;
+    z-index:5;
+    max-width:800px;
+    margin:60px auto 80px;
+    padding:0 20px;
+}
+
+.ask-card-inner{
+    position:relative;
+    z-index:2;
+    background:linear-gradient(135deg, rgba(61,220,151,0.12), rgba(240,168,96,0.08));
+    border:1px solid rgba(61,220,151,0.3);
+    border-radius:20px;
+    padding:44px 40px;
+    text-align:center;
+    backdrop-filter:blur(14px);
+}
+
+.ask-badge{
+    display:inline-block;
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--accent-soft);
+    font-weight:700;
+    margin-bottom:14px;
+    padding:6px 14px;
+    border:1px solid rgba(240,168,96,0.35);
+    border-radius:30px;
+}
+
+.ask-card-inner h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:26px;
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.ask-card-inner p{
+    color:var(--text-dim);
+    font-size:14.5px;
+    max-width:520px;
+    margin:0 auto 10px;
+    line-height:1.7;
+}
+
+.ask-card-inner .ask-note{
+    font-size:13px;
+    color:var(--text);
+    margin-bottom:28px;
+}
+
+.ask-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:12px;
+    position:relative;
+    z-index:3;
+}
+
+.ask-actions .contact-btn,
+.ask-actions .contact-btn-outline{
+    cursor:pointer;
+    font-family:inherit;
+}
+
+.ask-actions .contact-btn{
+    border:none;
+}
+
+.contact-btn{
+    display:inline-block;
+    background:linear-gradient(90deg,var(--accent),#7fedbf);
+    color:#07231a;
+    text-decoration:none;
+    padding:13px 32px;
+    border-radius:12px;
+    font-size:14.5px;
+    font-weight:700;
+    transition:transform .2s ease, box-shadow .2s ease;
+}
+
+.contact-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 28px rgba(61,220,151,0.35);
+}
+
+.contact-btn-outline{
+    display:inline-block;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    color:var(--text);
+    text-decoration:none;
+    padding:12px 28px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:600;
+    transition:all .2s ease;
+}
+
+.contact-btn-outline:hover{
+    border-color:rgba(61,220,151,0.4);
+    color:var(--accent);
+    transform:translateY(-2px);
+}
+
+/* ===== Scroll to top ===== */
+.scroll-top{
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:linear-gradient(90deg,var(--accent),#7fedbf);
+    color:#07231a;
+    border:none;
+    font-size:18px;
+    cursor:pointer;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 10px 25px rgba(61,220,151,0.35);
+    z-index:45;
+    transition:transform .2s ease;
+}
+
+.scroll-top.show{ display:flex; }
+.scroll-top:hover{ transform:translateY(-3px); }
+
+.page-nav {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.page-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    padding: 13px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease; 
+}
+
+.page-nav-btn:hover {
+    transform: translateY(-3px);
+    border-color: rgba(61, 220, 151, 0.4);
+}
+
+.page-nav-btn.next {
+    background: linear-gradient(90deg, var(--accent), #7fedbf);
+    color: #07231a;
+    border-color: transparent;
+    box-shadow: 0 10px 25px rgba(61, 220, 151, 0.25);
+}
+
+.page-nav-btn.next:hover {
+    box-shadow: 0 14px 32px rgba(61, 220, 151, 0.4);
+}
+
+.page-nav-btn .arrow {
+    font-size: 16px;
+    line-height: 1;
+    transition: transform .2s ease;
+}
+
+.page-nav-btn:hover .arrow-left {
+    transform: translateX(-3px);
+}
+
+.page-nav-btn:hover .arrow-right {
+    transform: translateX(3px);
+}
+
+@media(max-width:600px) {
+    .page-nav {
+        justify-content: center;
+    }
+
+    .page-nav-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 130px;
+    }
+}
+
+/* ===== Footer ===== */
+footer{
+    position:relative;
+    z-index:0;
+    text-align:center;
+    padding:40px 20px;
+    color:var(--text-dim);
+    font-size:13px;
+    letter-spacing:0.3px;
+    border-top:1px solid var(--border);
+    margin-top:40px;
+}
+
+/* ===== Message Modal ===== */
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(4,10,8,0.7);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:20px;
+    opacity:0;
+    transition:opacity .25s ease;
+}
+
+.modal-overlay.show{
+    display:flex;
+    opacity:1;
+}
+
+.modal-box{
+    width:100%;
+    max-width:460px;
+    background:linear-gradient(160deg,#123128,#0c1c17);
+    border:1px solid rgba(61,220,151,0.3);
+    border-radius:18px;
+    padding:32px 30px;
+    position:relative;
+    transform:translateY(16px) scale(.97);
+    transition:transform .25s ease;
+    box-shadow:0 24px 60px rgba(0,0,0,0.45);
+}
+
+.modal-overlay.show .modal-box{
+    transform:translateY(0) scale(1);
+}
+
+.modal-close{
+    position:absolute;
+    top:16px;
+    right:16px;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .2s ease;
+}
+
+.modal-close:hover{
+    color:var(--text);
+    border-color:rgba(61,220,151,0.4);
+}
+
+.modal-box h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:21px;
+    font-weight:700;
+    margin-bottom:8px;
+}
+
+.modal-box p.modal-sub{
+    color:var(--text-dim);
+    font-size:13.5px;
+    margin-bottom:22px;
+    line-height:1.6;
+}
+
+.modal-field{
+    margin-bottom:16px;
+}
+
+.modal-field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--text-dim);
+    margin-bottom:7px;
+    letter-spacing:0.3px;
+}
+
+.modal-field input,
+.modal-field textarea{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.04);
+    color:var(--text);
+    font-family:inherit;
+    font-size:14px;
+    outline:none;
+    resize:vertical;
+    transition:border-color .2s ease, box-shadow .2s ease;
+}
+
+.modal-field textarea{ min-height:110px; }
+
+.modal-field input:focus,
+.modal-field textarea:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px rgba(61,220,151,0.12);
+}
+
+.modal-submit{
+    width:100%;
+    border:none;
+    margin-top:6px;
+    background:linear-gradient(90deg,var(--accent),#7fedbf);
+    color:#07231a;
+    padding:13px 24px;
+    border-radius:12px;
+    font-size:14.5px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    transition:transform .2s ease, box-shadow .2s ease;
+}
+
+.modal-submit:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 28px rgba(61,220,151,0.35);
+}
+
+.modal-success{
+    display:none;
+    text-align:center;
+    padding:10px 0 4px;
+}
+
+.modal-success.show{ display:block; }
+
+.modal-success .tick{
+    width:54px;
+    height:54px;
+    margin:0 auto 16px;
+    border-radius:50%;
+    background:rgba(61,220,151,0.15);
+    border:1px solid rgba(61,220,151,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    color:var(--accent);
+}
+
+.modal-success h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.modal-success p{
+    color:var(--text-dim);
+    font-size:13.5px;
+    line-height:1.6;
+}
+
+@media(max-width:600px){
+    .hero h1{ font-size:30px; }
+    .faq-question{ padding:18px 20px; }
+    .faq-answer-inner{ padding:0 20px 20px; }
+    .contact-card-inner{ padding:30px 22px; }
+    .ask-card-inner{ padding:30px 22px; }
+    .ask-card-inner h2{ font-size:22px; }
+    .modal-box{ padding:26px 20px; }
+}
+.faq-select-btn {
+    margin-top: 18px;
+    padding: 10px 18px;
+    border: 1px solid rgba(61, 220, 151, 0.35);
+    border-radius: 10px;
+    background: rgba(61, 220, 151, 0.08);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+.faq-select-btn:hover {
+    background: rgba(61, 220, 151, 0.16);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.faq-select-btn.selected {
+    background: linear-gradient(90deg, var(--accent), #7fedbf);
+    color: #07231a;
+    border-color: transparent;
+}
+</style>
+</head>
+<body>
+{% include '_flash.html' %}
+{% from '_nav.html' import site_nav %}
+{{ site_nav('faq') }}
+
+<section class="hero">
+    <span class="badge">NEED HELP? WE'VE GOT ANSWERS</span>
+    <h1>Frequently Asked Questions</h1>
+    <p>Everything you need to know before joining the Community Hackathon for Social Innovation.</p>
+
+    <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="searchInput" placeholder="Search your question...">
+    </div>
+</section>
+
+<div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="All">All</button>
+    <button class="filter-btn" data-filter="Registration">Registration</button>
+    <button class="filter-btn" data-filter="Teams">Teams</button>
+    <button class="filter-btn" data-filter="Hackathon">Hackathon</button>
+    <button class="filter-btn" data-filter="Projects">Projects</button>
+    <button class="filter-btn" data-filter="Judging">Judging</button>
+    <button class="filter-btn" data-filter="Prizes">Prizes</button>
+</div>
+
+<script id="faq-data" type="application/json">
+{{ faqs | tojson }}
+</script>
+
+<section class="faq-section">
+    <div id="faqList"></div>
+    <p class="no-results" id="noResults">
+        No results found. Try searching with different keywords.
+    </p>
+</section>
+
+<section class="ask-section">
+    <div class="ask-card-inner">
+        <span class="ask-badge">Have a doubt?</span>
+        <h2>Ask a Personal Question</h2>
+        <p>
+            If your question is not listed above or you need help with something specific,
+            you can ask our organizers directly.
+        </p>
+        <p class="ask-note">
+            Share your personal doubt and we will get back to you as soon as possible.
+        </p>
+        <div class="ask-actions">
+            <button type="button" class="contact-btn" onclick="goToContactPage(false)">Contact Us</button>
+            <button type="button" class="contact-btn-outline" onclick="openMessageModal()">Send a Message</button>
+        </div>
+    </div>
+</section>
+
+<!-- //next  button  -->
+<div class="page-nav">
+    <a href="{{ url_for('gallery') }}" class="page-nav-btn back">
+        <span class="arrow arrow-left">←</span> Back
+    </a>
+    <a href="{{ url_for('contact') }}" class="page-nav-btn next">
+        Next <span class="arrow arrow-right">→</span>
+    </a>
+</div>
+
+<footer>
+    © 2026 Community Hackathon for Social Innovation
+</footer>
+
+<button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ===== Send a Message Modal ===== -->
+<div class="modal-overlay" id="messageModal" onclick="handleOverlayClick(event)">
+    <div class="modal-box">
+        <button type="button" class="modal-close" onclick="closeMessageModal()">✕</button>
+
+        <div id="modalFormWrap">
+            <h2>Send a Message</h2>
+            <p class="modal-sub">Type your doubt below and hit send — our team will get back to you over email.</p>
+
+            <form id="messageForm" onsubmit="return submitMessageForm(event)">
+                <div class="modal-field">
+                    <label for="msgName">Your Name</label>
+                    <input type="text" id="msgName" placeholder="e.g. Priya Sharma" required>
+                </div>
+                <div class="modal-field">
+                    <label for="msgEmail">Your Email</label>
+                    <input type="email" id="msgEmail" placeholder="e.g. priya@example.com" required>
+                </div>
+                <div class="modal-field">
+                    <label for="msgText">Your Message</label>
+                    <textarea id="msgText" placeholder="Type your question here..." required></textarea>
+                </div>
+                <button type="submit" class="modal-submit">Send Message</button>
+            </form>
+        </div>
+
+        <div class="modal-success" id="modalSuccess">
+            <div class="tick">✓</div>
+            <h3>Message Ready!</h3>
+            <p>Your email app should have opened with your message pre-filled. Just hit send there to reach us.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+const CONTACT_PAGE = "ContactUs%289%29.html";
+const ORGANIZER_EMAIL = "hackathon.organizers@example.com";
+
+function goToContactPage(scrollToForm, event) {
+    if (event) event.preventDefault();
+
+    const url = scrollToForm ? CONTACT_PAGE + "#contact" : CONTACT_PAGE;
+    window.location.href = url;
+    return false;
+}
+
+function openMessageModal(){
+    document.getElementById('modalFormWrap').style.display = 'block';
+    document.getElementById('modalSuccess').classList.remove('show');
+    document.getElementById('messageModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMessageModal(){
+    document.getElementById('messageModal').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e){
+    if(e.target.id === 'messageModal'){
+        closeMessageModal();
+    }
+}
+
+function submitMessageForm(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("msgName").value.trim();
+    const email = document.getElementById("msgEmail").value.trim();
+    const msg = document.getElementById("msgText").value.trim();
+
+    if (!name || !email || !msg) {
+        return false;
+    }
+
+    fetch("/save-faq-message", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            name: name,
+            email: email,
+            message: msg
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+
+            document.getElementById("modalFormWrap").style.display = "none";
+            document.getElementById("modalSuccess").classList.add("show");
+
+            document.getElementById("messageForm").reset();
+
+        } else {
+            alert(data.message || "Unable to save your message.");
+        }
+    })
+    .catch(error => {
+        console.error("FAQ message error:", error);
+        alert("Something went wrong while sending your message.");
+    });
+
+    return false;
+}
+
+const faqDataElement = document.getElementById("faq-data");
+
+const faqs = faqDataElement
+    ? JSON.parse(faqDataElement.textContent || "[]")
+    : [];
+
+const faqList = document.getElementById('faqList');
+const noResults = document.getElementById('noResults');
+let activeFilter = "All";
+let searchTerm = "";
+let openId = null;
+
+function renderFaqs(){
+    faqList.innerHTML = "";
+    const filtered = faqs.filter(f => {
+        const matchesFilter = activeFilter === "All" || f.category === activeFilter;
+        const matchesSearch = f.q.toLowerCase().includes(searchTerm) || f.a.toLowerCase().includes(searchTerm);
+        return matchesFilter && matchesSearch;
+    });
+
+    noResults.style.display = filtered.length === 0 ? "block" : "none";
+
+    filtered.forEach((f, index) => {
+        const item = document.createElement('div');
+        item.className = "faq-item" + (openId === f.id ? " open" : "");
+        item.style.animationDelay = (index * 0.05) + "s";
+
+        item.innerHTML = `
+    <div class="faq-question" onclick="toggleFaq(${f.id})">
+        <div class="faq-question-text">
+            <span class="faq-cat">${f.category}</span>
+            <h3>${f.q}</h3>
+        </div>
+        <div class="faq-toggle">+</div>
+    </div>
+
+    <div class="faq-answer" id="answer-${f.id}">
+        <div class="faq-answer-inner">
+            ${f.a}
+
+            <button
+                type="button"
+                class="faq-select-btn"
+                id="faq-select-${f.id}"
+                onclick="event.stopPropagation(); selectFaq(${f.id})">
+                Select this FAQ
+            </button>
+        </div>
+    </div>
+`;
+        faqList.appendChild(item);
+    });
+
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.faq-item').forEach(el => el.classList.add('reveal'));
+        if(openId !== null){
+            const answer = document.getElementById('answer-' + openId);
+            if(answer) answer.style.maxHeight = answer.scrollHeight + "px";
+        }
+    });
+}
+
+function toggleFaq(id){
+    const wasOpen = openId === id;
+    const prevOpenId = openId;
+    openId = wasOpen ? null : id;
+
+    if(prevOpenId !== null && prevOpenId !== id){
+        const prevAnswer = document.getElementById('answer-' + prevOpenId);
+        if(prevAnswer) prevAnswer.style.maxHeight = "0px";
+    }
+
+    renderFaqs();
+}
+
+function selectFaq(faqId) {
+    fetch("/save-faq-selection", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            selected_ids: [faqId]
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const button = document.getElementById("faq-select-" + faqId);
+
+            if (button) {
+                button.textContent = "✓ FAQ Selected";
+                button.classList.add("selected");
+            }
+
+            alert("FAQ selected successfully!");
+        } else {
+            alert(data.message || "Unable to save FAQ selection.");
+        }
+    })
+    .catch(error => {
+        console.error("FAQ selection error:", error);
+        alert("Something went wrong while saving the FAQ.");
+    });
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value.toLowerCase();
+    renderFaqs();
+});
+
+document.getElementById('filters').addEventListener('click', (e) => {
+    if(e.target.classList.contains('filter-btn')){
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        activeFilter = e.target.dataset.filter;
+        renderFaqs();
+    }
+});
+
+window.addEventListener('scroll', () => {
+    const btn = document.getElementById('scrollTopBtn');
+    if(window.scrollY > 400){
+        btn.classList.add('show');
+    } else {
+        btn.classList.remove('show');
+    }
+});
+
+renderFaqs();
+</script>
+
+</body>
+</html>

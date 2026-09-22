@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Community Hackathon</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07120f;--bg-panel:#0c1c17;--border:rgba(255,255,255,0.08);--accent:#3ddc97;--accent-soft:#f0a860;--text:#e9f5f0;--text-dim:#8fa89e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.topbar{background:rgba(12,28,23,0.95);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
+.topbar h1{font-family:'Space Grotesk',sans-serif;font-size:20px;}
+.topbar a{color:#ff8a8a;text-decoration:none;font-size:14px;font-weight:600;}
+.container{max-width:1400px;margin:0 auto;padding:28px 20px 60px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:32px;}
+.stat-box{background:rgba(16,40,33,0.6);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
+.stat-box h3{font-family:'Space Grotesk',sans-serif;font-size:28px;color:var(--accent-soft);}
+.stat-box p{font-size:12px;color:var(--text-dim);margin-top:6px;}
+.section{background:rgba(16,40,33,0.55);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px;}
+.section h2{font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:16px;color:var(--accent);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);}
+th{color:var(--text-dim);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}
+.btn-sm{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;}
+.btn-sm.danger{color:#ff6b6b;border-color:rgba(255,107,107,0.3);}
+.btn-sm.primary{background:rgba(61,220,151,0.15);color:var(--accent);border-color:rgba(61,220,151,0.3);}
+.admin-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;}
+.admin-form input,.admin-form select,.admin-form textarea{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text);font-family:inherit;font-size:13px;}
+.admin-form textarea{grid-column:1/-1;min-height:60px;}
+.unread{font-weight:700;color:var(--accent);}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.tab-btn{padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-dim);cursor:pointer;font-size:13px;font-family:inherit;}
+.tab-btn.active{background:rgba(61,220,151,0.12);color:var(--accent);border-color:rgba(61,220,151,0.35);}
+.tab-panel{display:none;} .tab-panel.active{display:block;}
+</style>
+</head>
+<body>
+{% include '_flash.html' %}
+
+<div class="topbar">
+    <h1>Admin Dashboard — Welcome, {{ admin_name }}</h1>
+    <a href="{{ url_for('admin_logout') }}">Logout</a>
+</div>
+
+<div class="container">
+    <div class="stats-grid">
+        <div class="stat-box"><h3>{{ stats.total_users }}</h3><p>Total Users</p></div>
+        <div class="stat-box"><h3>{{ stats.total_teams }}</h3><p>Total Teams</p></div>
+        <div class="stat-box"><h3>{{ stats.total_registrations }}</h3><p>Registrations</p></div>
+        <div class="stat-box"><h3>{{ stats.total_problems }}</h3><p>Problem Statements</p></div>
+        <div class="stat-box"><h3>{{ stats.total_judges }}</h3><p>Judges</p></div>
+        <div class="stat-box"><h3>{{ stats.total_mentors }}</h3><p>Mentors</p></div>
+        <div class="stat-box"><h3>{{ stats.total_messages }}</h3><p>Contact Messages</p></div>
+        <div class="stat-box"><h3>{{ stats.unread_messages }}</h3><p>Unread Messages</p></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('users')">Users</button>
+        <button class="tab-btn" onclick="showTab('teams')">Teams</button>
+        <button class="tab-btn" onclick="showTab('problems')">Problems</button>
+        <button class="tab-btn" onclick="showTab('judges')">Judges & Mentors</button>
+        <button class="tab-btn" onclick="showTab('events')">Events</button>
+        <button class="tab-btn" onclick="showTab('faqs')">FAQs</button>
+        <button class="tab-btn" onclick="showTab('messages')">Messages</button>
+        <button class="tab-btn" onclick="showTab('certificates')">Certificates</button>
+    </div>
+
+    <!-- USERS -->
+    <div id="tab-users" class="tab-panel active section">
+        <h2>User Management</h2>
+        <table>
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Joined</th><th>Action</th></tr>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.id }}</td><td>{{ u.name }}</td><td>{{ u.email }}</td>
+                <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '' }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.id) }}" style="display:inline;" onsubmit="return confirm('Delete this user?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- TEAMS -->
+    <div id="tab-teams" class="tab-panel section">
+        <h2>Team Management</h2>
+        <table>
+            <tr><th>Team</th><th>Leader</th><th>College</th><th>Problem</th><th>Status</th><th>Reg ID</th></tr>
+            {% for t in teams %}
+            <tr>
+                <td>{{ t.team_name }}</td><td>{{ t.team_leader }}</td><td>{{ t.college }}</td>
+                <td>{{ t.problem_title }}</td><td>{{ t.status or 'N/A' }}</td>
+                <td>{{ t.registration_id or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- PROBLEMS -->
+    <div id="tab-problems" class="tab-panel section">
+        <h2>Problem Statements</h2>
+        <form class="admin-form" method="POST" action="{{ url_for('admin_add_problem') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input name="title" placeholder="Title" required>
+            <select name="category" required>
+                <option value="Education">Education</option><option value="Healthcare">Healthcare</option>
+                <option value="Environment">Environment</option><option value="Agriculture">Agriculture</option>
+                <option value="Smart City">Smart City</option><option value="Women Safety">Women Safety</option>
+            </select>
+            <select name="difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
+            <input name="technologies" placeholder="Technologies">
+            <textarea name="description" placeholder="Description" required></textarea>
+            <textarea name="social_impact" placeholder="Social Impact"></textarea>
+            <button class="btn-sm primary" type="submit">Add Problem</button>
+        </form>
+        <table>
+            <tr><th>Title</th><th>Category</th><th>Difficulty</th><th>Actions</th></tr>
+            {% for p in problems %}
+            <tr>
+                <td>{{ p.title }}</td><td>{{ p.category }}</td><td>{{ p.difficulty }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_delete_problem', pid=p.id) }}" style="display:inline;" onsubmit="return confirm('Delete?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- JUDGES -->
+    <div id="tab-judges" class="tab-panel section">
+        <h2>Judges & Mentors</h2>
+        <form class="admin-form" method="POST" action="{{ url_for('admin_add_judge_mentor') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input name="name" placeholder="Name" required>
+            <input name="role" placeholder="Role/Title">
+            <input name="organization" placeholder="Organization">
+            <input name="expertise" placeholder="Expertise (comma separated)">
+            <input name="experience" placeholder="Experience">
+            <select name="type"><option>Judge</option><option>Mentor</option></select>
+            <input name="image" placeholder="Image URL">
+            <textarea name="bio" placeholder="Bio"></textarea>
+            <button class="btn-sm primary" type="submit">Add Person</button>
+        </form>
+        <table>
+            <tr><th>Name</th><th>Type</th><th>Organization</th><th>Actions</th></tr>
+            {% for j in judges_mentors %}
+            <tr>
+                <td>{{ j.name }}</td><td>{{ j.type }}</td><td>{{ j.organization }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_delete_judge_mentor', jid=j.id) }}" style="display:inline;" onsubmit="return confirm('Delete?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- EVENTS -->
+    <div id="tab-events" class="tab-panel section">
+        <h2>Event Schedule</h2>
+        <form class="admin-form" method="POST" action="{{ url_for('admin_add_event') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input name="event_name" placeholder="Event Name" required>
+            <input name="event_date" type="date" required>
+            <input name="event_time" type="time" required>
+            <input name="venue" placeholder="Venue">
+            <input name="category" placeholder="Category">
+            <input name="duration" placeholder="Duration">
+            <textarea name="description" placeholder="Description"></textarea>
+            <button class="btn-sm primary" type="submit">Add Event</button>
+        </form>
+        <table>
+            <tr><th>Event</th><th>Date</th><th>Time</th><th>Venue</th><th>Actions</th></tr>
+            {% for e in events %}
+            <tr>
+                <td>{{ e.event_name }}</td>
+                <td>{{ e.event_date }}</td><td>{{ e.event_time }}</td><td>{{ e.venue }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_delete_event', eid=e.id) }}" style="display:inline;" onsubmit="return confirm('Delete?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- FAQS -->
+    <div id="tab-faqs" class="tab-panel section">
+        <h2>FAQ Management</h2>
+        <form class="admin-form" method="POST" action="{{ url_for('admin_add_faq') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input name="category" placeholder="Category" value="General">
+            <textarea name="question" placeholder="Question" required></textarea>
+            <textarea name="answer" placeholder="Answer" required></textarea>
+            <button class="btn-sm primary" type="submit">Add FAQ</button>
+        </form>
+        <table>
+            <tr><th>Question</th><th>Category</th><th>Actions</th></tr>
+            {% for f in faqs %}
+            <tr>
+                <td>{{ f.question[:80] }}{% if f.question|length > 80 %}...{% endif %}</td>
+                <td>{{ f.category }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_delete_faq', fid=f.id) }}" style="display:inline;" onsubmit="return confirm('Delete?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="tab-messages" class="tab-panel section">
+        <h2>Contact Messages</h2>
+        <table>
+            <tr><th>From</th><th>Subject</th><th>Message</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+            {% for m in messages %}
+            <tr class="{% if not m.is_read %}unread{% endif %}">
+                <td>{{ m.name }}<br><small>{{ m.email }}</small></td>
+                <td>{{ m.subject }}</td>
+                <td>{{ m.message[:60] }}{% if m.message|length > 60 %}...{% endif %}</td>
+                <td>{{ m.created_at.strftime('%Y-%m-%d') if m.created_at else '' }}</td>
+                <td>{% if m.is_read %}Read{% else %}Unread{% endif %}</td>
+                <td>
+                    {% if not m.is_read %}
+                    <form method="POST" action="{{ url_for('admin_mark_message_read', mid=m.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm primary" type="submit">Mark Read</button>
+                    </form>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('admin_delete_message', mid=m.id) }}" style="display:inline;" onsubmit="return confirm('Delete?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn-sm danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!-- CERTIFICATES -->
+<div id="tab-certificates" class="tab-panel section">
+
+    <h2>Certificate Management</h2>
+
+    <form class="admin-form"
+          method="POST"
+          action="{{ url_for('admin_issue_certificate') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <select name="user_id" required>
+            <option value="">Select User</option>
+
+            {% for u in users %}
+            <option value="{{ u.id }}">
+                {{ u.name }} — {{ u.email }}
+            </option>
+            {% endfor %}
+
+        </select>
+
+
+        <select name="certificate_type"
+                id="certificateType"
+                onchange="togglePosition()"
+                required>
+
+            <option value="Participation">
+                Participation
+            </option>
+
+            <option value="Winner">
+                Winner / Achievement
+            </option>
+
+        </select>
+
+
+        <input
+            type="text"
+            name="position"
+            id="positionField"
+            placeholder="Position (e.g. 1st Place)"
+            style="display:none;"
+        >
+
+
+        <button class="btn-sm primary" type="submit">
+            Issue Certificate
+        </button>
+
+    </form>
+
+
+    <table>
+
+        <tr>
+            <th>Certificate ID</th>
+            <th>User</th>
+            <th>Type</th>
+            <th>Position</th>
+            <th>Team</th>
+            <th>Challenge</th>
+            <th>Issued Date</th>
+        </tr>
+
+
+        {% for c in certificates %}
+
+        <tr>
+
+            <td>{{ c.certificate_id }}</td>
+
+            <td>
+                {{ c.user_name }}
+                <br>
+                <small>{{ c.user_email }}</small>
+            </td>
+
+            <td>{{ c.certificate_type }}</td>
+
+            <td>{{ c.position or '—' }}</td>
+
+            <td>{{ c.team_name or '—' }}</td>
+
+            <td>{{ c.problem_statement or '—' }}</td>
+
+            <td>
+                {{ c.issued_at.strftime('%Y-%m-%d')
+                   if c.issued_at else '' }}
+            </td>
+
+        </tr>
+
+        {% else %}
+
+        <tr>
+            <td colspan="7" style="text-align:center;">
+                No certificates issued yet.
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</div>
+</div>
+
+<script>
+function showTab(name){
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    event.target.classList.add('active');
+}
+function togglePosition() {
+
+    const type = document.getElementById("certificateType").value;
+    const position = document.getElementById("positionField");
+
+    if (type === "Winner") {
+        position.style.display = "block";
+        position.required = true;
+    } else {
+        position.style.display = "none";
+        position.required = false;
+        position.value = "";
+    }
+}
+
+function showTab(name){
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

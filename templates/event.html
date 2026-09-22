@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Event Schedule — Community Hackathon for Social Innovation</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #07120f;
+            --bg-panel: #0c1c17;
+            --bg-card: #102821;
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #3ddc97;
+            --accent-soft: #f0a860;
+            --text: #e9f5f0;
+            --text-dim: #8fa89e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== Nav ===== */
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(12, 28, 23, 0.75);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px;
+            text-align: center;
+        }
+
+        nav a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin: 0 6px;
+            font-weight: 500;
+            font-size: 13.5px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ===== Hero ===== */
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 90px 20px 50px;
+            background:
+                radial-gradient(ellipse at top, rgba(61, 220, 151, 0.14), transparent 60%),
+                linear-gradient(180deg, #0a1a15, #07120f);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero .badge {
+            display: inline-block;
+            font-size: 11.5px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding: 7px 16px;
+            border: 1px solid rgba(61, 220, 151, 0.35);
+            border-radius: 30px;
+        }
+
+        .hero h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 46px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            max-width: 700px;
+            margin: 0 auto 16px;
+            line-height: 1.15;
+            background: linear-gradient(90deg, #e9f5f0, #3ddc97 60%, #f0a860);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: var(--text-dim);
+            max-width: 520px;
+            margin: 0 auto;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== Status card ===== */
+
+        .status-section {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: -40px auto 0;
+            padding: 0 20px;
+        }
+
+        .status-card {
+            background: rgba(16, 40, 33, 0.65);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 34px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .status-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .status-block .label {
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .status-block .value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .status-block.current .value {
+            color: var(--accent);
+        }
+
+        .status-block.next .value {
+            color: var(--accent-soft);
+        }
+
+        .countdown-pill {
+            display: inline-block;
+            margin-top: 10px;
+            background: rgba(240, 168, 96, 0.1);
+            border: 1px solid rgba(240, 168, 96, 0.3);
+            color: var(--accent-soft);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .progress-wrap {
+            margin-top: 10px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+
+        .progress-label b {
+            color: var(--accent);
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+            border-radius: 20px;
+            transition: width 1s ease;
+        }
+
+        /* ===== Filters ===== */
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 50px 20px 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 13.5px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: rgba(61, 220, 151, 0.4);
+            color: var(--text);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(90deg, var(--accent), #7fedbf);
+            color: #07231a;
+            border-color: transparent;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(61, 220, 151, 0.25);
+        }
+
+        /* ===== Timeline ===== */
+
+        .timeline-section {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 50px auto 0;
+            padding: 0 20px 40px;
+        }
+
+        .timeline {
+            position: relative;
+            border-left: 2px solid rgba(61, 220, 151, 0.25);
+            padding-left: 34px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 26px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .timeline-item.reveal {
+            animation: itemIn 0.5s ease forwards;
+        }
+
+        @keyframes itemIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -42px;
+            top: 26px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--bg-panel);
+            border: 2px solid var(--text-dim);
+        }
+
+        .timeline-item.completed .timeline-dot {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .timeline-item.current .timeline-dot {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 6px rgba(61, 220, 151, 0.2);
+            animation: pulseDot 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 6px rgba(61, 220, 151, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(61, 220, 151, 0.08);
+            }
+        }
+
+        .event-card {
+            background: rgba(16, 40, 33, 0.55);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px 24px;
+            backdrop-filter: blur(12px);
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(61, 220, 151, 0.35);
+            box-shadow: 0 14px 32px rgba(61, 220, 151, 0.14);
+        }
+
+        .timeline-item.current .event-card {
+            border-color: rgba(61, 220, 151, 0.55);
+            box-shadow:
+                0 0 0 1px rgba(61, 220, 151, 0.3),
+                0 18px 38px rgba(61, 220, 151, 0.2);
+        }
+
+        .event-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .event-time {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-soft);
+            letter-spacing: 0.3px;
+        }
+
+        .event-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .event-status.completed {
+            background: rgba(61, 220, 151, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(61, 220, 151, 0.3);
+        }
+
+        .event-status.current {
+            background: rgba(240, 168, 96, 0.12);
+            color: var(--accent-soft);
+            border: 1px solid rgba(240, 168, 96, 0.35);
+        }
+
+        .event-status.upcoming {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .event-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .event-category {
+            display: inline-block;
+            font-size: 11px;
+            color: var(--text-dim);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            padding: 4px 11px;
+            border-radius: 20px;
+            margin-bottom: 14px;
+        }
+
+        .event-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .add-btn {
+            background: rgba(61, 220, 151, 0.08);
+            border: 1px solid rgba(61, 220, 151, 0.3);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background: rgba(61, 220, 151, 0.16);
+            transform: translateY(-2px);
+        }
+
+        .add-btn.added {
+            background: linear-gradient(90deg, var(--accent), #7fedbf);
+            color: #07231a;
+            border-color: transparent;
+        }
+
+        .add-btn.added:hover {
+            background: rgba(233, 89, 89, 0.16);
+            color: #ff8a8a;
+            border: 1px solid rgba(233, 89, 89, 0.35);
+        }
+
+        /* ===== Modal ===== */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 10, 8, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 36px 30px;
+            border-radius: 18px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-box .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 18px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-box .close-btn:hover {
+            color: var(--text);
+        }
+
+        .modal-box h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: var(--text);
+            padding-right: 20px;
+        }
+
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13.5px;
+        }
+
+        .modal-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .modal-row span:first-child {
+            color: var(--text-dim);
+        }
+
+        .modal-row span:last-child {
+            color: var(--text);
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .modal-desc {
+            margin-top: 18px;
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* ===== Toast ===== */
+
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(61, 220, 151, 0.12);
+            border: 1px solid rgba(61, 220, 151, 0.4);
+            color: var(--accent);
+            padding: 14px 26px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            z-index: 60;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.removed {
+            background: rgba(233, 89, 89, 0.12);
+            border: 1px solid rgba(233, 89, 89, 0.4);
+            color: #ff8a8a;
+        }
+
+        /* ===== Step navigation ===== */
+
+        .step-nav {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 20px auto 0;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .step-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 26px;
+            border-radius: 12px;
+            font-size: 14.5px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.2s ease;
+            border: 1px solid var(--border);
+        }
+
+        .step-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .step-btn.back {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+        }
+
+        .step-btn.back:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .step-btn.next {
+            background: linear-gradient(90deg, var(--accent), #7fedbf);
+            color: #07231a;
+            border-color: transparent;
+            box-shadow: 0 10px 25px rgba(61, 220, 151, 0.25);
+            margin-left: auto;
+        }
+
+        .step-btn.next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(61, 220, 151, 0.35);
+        }
+
+        .step-hint {
+            max-width: 800px;
+            margin: 12px auto 0;
+            padding: 0 20px;
+            font-size: 12.5px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        /* ===== Scroll to top ===== */
+
+        .scroll-top {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, var(--accent), #7fedbf);
+            color: #07231a;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(61, 220, 151, 0.35);
+            z-index: 45;
+            transition: transform 0.2s ease;
+        }
+
+        .scroll-top.show {
+            display: flex;
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-3px);
+        }
+
+        /* ===== Footer ===== */
+
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-dim);
+            font-size: 13px;
+            letter-spacing: 0.3px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .status-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .timeline {
+                padding-left: 26px;
+            }
+
+            .timeline-dot {
+                left: -34px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include '_flash.html' %}
+    {% from '_nav.html' import site_nav %}
+    {{ site_nav('events') }}
+
+    <section class="hero">
+        <span class="badge">24 HOURS • ONE CHALLENGE • REAL SOCIAL IMPACT</span>
+        <h1>Event Schedule</h1>
+        <p>Follow the complete 24-hour journey from registration to the final celebration.</p>
+    </section>
+
+    <section class="status-section">
+        <div class="status-card">
+
+            <div class="status-top">
+
+                <div class="status-block current">
+                    <div class="label" id="statusHeading">🟢 Current Event</div>
+                    <div class="value" id="currentEventName">—</div>
+                </div>
+
+                <div class="status-block next">
+                    <div class="label">Next Event</div>
+                    <div class="value" id="nextEventName">—</div>
+                    <div class="countdown-pill" id="countdownPill">—</div>
+                </div>
+
+            </div>
+
+            <div class="progress-wrap">
+
+                <div class="progress-label">
+                    <span>Hackathon Progress</span>
+                    <b id="progressPercent">0%</b>
+                </div>
+
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <div class="filters" id="filters">
+
+        <button class="filter-btn active" data-filter="All">All</button>
+        <button class="filter-btn" data-filter="Hackathon">Hackathon</button>
+        <button class="filter-btn" data-filter="Workshop">Workshop</button>
+        <button class="filter-btn" data-filter="Mentoring">Mentoring</button>
+        <button class="filter-btn" data-filter="Ceremony">Ceremony</button>
+        <button class="filter-btn" data-filter="Break">Break</button>
+        <button class="filter-btn" data-filter="Judging">Judging</button>
+
+    </div>
+
+    <section class="timeline-section">
+        <div class="timeline" id="timeline"></div>
+    </section>
+
+    <div class="step-nav">
+
+        <button class="step-btn back" id="stepBackBtn">
+
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+
+            Back
+
+        </button>
+
+        <button class="step-btn next" id="stepNextBtn">
+
+            Next
+
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+
+        </button>
+
+    </div>
+
+    <p class="step-hint">
+        Add at least one event to your schedule above to continue to the next step.
+    </p>
+
+    <footer>
+        © 2026 Community Hackathon for Social Innovation
+    </footer>
+
+    <div class="toast" id="toast">
+        Event added to your schedule.
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+
+        <div class="modal-box">
+
+            <button class="close-btn" onclick="closeModal()">✕</button>
+
+            <h2 id="modalTitle"></h2>
+
+            <div class="modal-row">
+                <span>Time</span>
+                <span id="modalTime"></span>
+            </div>
+
+            <div class="modal-row">
+                <span>Duration</span>
+                <span id="modalDuration"></span>
+            </div>
+
+            <div class="modal-row">
+                <span>Category</span>
+                <span id="modalCategory"></span>
+            </div>
+
+            <div class="modal-row">
+                <span>Location</span>
+                <span id="modalLocation"></span>
+            </div>
+
+            <p class="modal-desc" id="modalDesc"></p>
+
+        </div>
+
+    </div>
+
+    <button class="scroll-top" id="scrollTopBtn"
+        onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        ↑
+    </button>
+
+
+   
+    <div id="event-data"
+        data-events='{{ events | tojson }}'
+        style="display:none;">
+    </div>
+
+
+    <script>
+
+        /* =========================================
+           EVENT DATA
+           ========================================= */
+
+        const eventDataElement = document.getElementById("event-data");
+
+        let eventData = [];
+
+        try {
+
+            eventData = JSON.parse(
+                eventDataElement.dataset.events || "[]"
+            );
+
+        } catch (error) {
+
+            console.error("Unable to read event data:", error);
+            eventData = [];
+
+        }
+
+
+        const eventStart = new Date("2026-11-10T09:00:00");
+
+
+        const eventsWithDates = eventData.map(e => ({
+
+            ...e,
+
+            dateObj: new Date(e.time)
+
+        }));
+
+
+        const eventEnd = eventsWithDates.length > 0
+            ? eventsWithDates[eventsWithDates.length - 1].dateObj
+            : eventStart;
+
+
+        let activeFilter = "All";
+
+
+        /*
+            Stores the events selected by the user.
+        */
+        const addedEvents = new Set();
+
+
+        /* =========================================
+           FORMAT TIME
+           ========================================= */
+
+        function formatTime(date) {
+
+            return date.toLocaleTimeString('en-US', {
+
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+
+            });
+
+        }
+
+
+        /* =========================================
+           EVENT STATE
+           ========================================= */
+
+        function getEventState(now) {
+
+            if (eventsWithDates.length === 0) {
+
+                return {
+                    status: "after",
+                    current: null,
+                    next: null
+                };
+
+            }
+
+
+            for (let i = 0; i < eventsWithDates.length; i++) {
+
+                const current = eventsWithDates[i];
+
+                const next = eventsWithDates[i + 1];
+
+                const nextTime = next
+                    ? next.dateObj
+                    : eventEnd;
+
+
+                if (now < eventsWithDates[0].dateObj) {
+
+                    return {
+
+                        status: "before",
+
+                        current: null,
+
+                        next: eventsWithDates[0]
+
+                    };
+
+                }
+
+
+                if (now >= current.dateObj && now < nextTime) {
+
+                    return {
+
+                        status: "during",
+
+                        current: current,
+
+                        next: next || null
+
+                    };
+
+                }
+
+            }
+
+
+            return {
+
+                status: "after",
+
+                current: eventsWithDates[eventsWithDates.length - 1],
+
+                next: null
+
+            };
+
+        }
+
+
+        /* =========================================
+           UPDATE STATUS
+           ========================================= */
+
+        function updateStatus() {
+
+            const now = new Date();
+
+            const state = getEventState(now);
+
+
+            const headingEl =
+                document.getElementById('statusHeading');
+
+
+            const currentNameEl =
+                document.getElementById('currentEventName');
+
+
+            const nextNameEl =
+                document.getElementById('nextEventName');
+
+
+            const countdownEl =
+                document.getElementById('countdownPill');
+
+
+            if (state.status === "before") {
+
+                headingEl.textContent =
+                    "⏳ Hackathon starts in";
+
+
+                currentNameEl.textContent =
+                    "Not started yet";
+
+
+                nextNameEl.textContent =
+                    state.next.name;
+
+
+                const diff =
+                    state.next.dateObj - now;
+
+
+                countdownEl.textContent =
+                    "Starts in " + formatDiff(diff);
+
+
+            }
+
+            else if (state.status === "during") {
+
+                headingEl.textContent =
+                    "🟢 Happening Now";
+
+
+                currentNameEl.textContent =
+                    state.current.name;
+
+
+                if (state.next) {
+
+                    nextNameEl.textContent =
+                        state.next.name;
+
+
+                    const diff =
+                        state.next.dateObj - now;
+
+
+                    countdownEl.textContent =
+                        "Next event starts in " +
+                        formatDiff(diff);
+
+                }
+
+                else {
+
+                    nextNameEl.textContent =
+                        "Hackathon wrapping up";
+
+
+                    countdownEl.textContent =
+                        "Final event in progress";
+
+                }
+
+            }
+
+            else {
+
+                headingEl.textContent =
+                    "🏁 Hackathon Completed";
+
+
+                currentNameEl.textContent =
+                    "All events finished";
+
+
+                nextNameEl.textContent =
+                    "See you next year!";
+
+
+                countdownEl.textContent =
+                    "Thank you for participating";
+
+            }
+
+        }
+
+
+        /* =========================================
+           FORMAT COUNTDOWN
+           ========================================= */
+
+        function formatDiff(ms) {
+
+            if (ms < 0) {
+                ms = 0;
+            }
+
+
+            const totalMinutes =
+                Math.floor(ms / 60000);
+
+
+            const hours =
+                Math.floor(totalMinutes / 60);
+
+
+            const minutes =
+                totalMinutes % 60;
+
+
+            return hours + "h " + minutes + "m";
+
+        }
+
+
+        /* =========================================
+           UPDATE PROGRESS
+           ========================================= */
+
+        function updateProgress() {
+
+            const now = new Date();
+
+
+            if (eventsWithDates.length === 0) {
+
+                document.getElementById(
+                    'progressBarFill'
+                ).style.width = "0%";
+
+
+                document.getElementById(
+                    'progressPercent'
+                ).textContent = "0%";
+
+
+                return;
+
+            }
+
+
+            const totalTime =
+                eventEnd - eventStart;
+
+
+            if (totalTime <= 0) {
+
+                document.getElementById(
+                    'progressBarFill'
+                ).style.width = "0%";
+
+
+                document.getElementById(
+                    'progressPercent'
+                ).textContent = "0%";
+
+
+                return;
+
+            }
+
+
+            let percent =
+                ((now - eventStart) / totalTime) * 100;
+
+
+            percent =
+                Math.max(0, Math.min(100, percent));
+
+
+            document.getElementById(
+                'progressBarFill'
+            ).style.width =
+                percent.toFixed(1) + "%";
+
+
+            document.getElementById(
+                'progressPercent'
+            ).textContent =
+                Math.round(percent) + "%";
+
+        }
+
+
+        /* =========================================
+           EVENT STATUS
+           ========================================= */
+
+        function getStatusForEvent(ev, now, state) {
+
+            if (
+                state.status === "during" &&
+                state.current &&
+                state.current.id === ev.id
+            ) {
+
+                return "current";
+
+            }
+
+
+            if (ev.dateObj <= now) {
+
+                return "completed";
+
+            }
+
+
+            return "upcoming";
+
+        }
+
+
+        /* =========================================
+           RENDER TIMELINE
+           ========================================= */
+
+        function renderTimeline() {
+
+            const timeline =
+                document.getElementById('timeline');
+
+
+            timeline.innerHTML = "";
+
+
+            const now = new Date();
+
+
+            const state =
+                getEventState(now);
+
+
+            const filtered =
+                eventsWithDates.filter(ev =>
+
+                    activeFilter === "All" ||
+                    ev.category === activeFilter
+
+                );
+
+
+            if (filtered.length === 0) {
+
+                timeline.innerHTML = `
+
+                    <div class="event-card"
+                        style="text-align:center;color:var(--text-dim);">
+
+                        No events available.
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            filtered.forEach((ev, index) => {
+
+                const status =
+                    getStatusForEvent(
+                        ev,
+                        now,
+                        state
+                    );
+
+
+                const statusLabel =
+
+                    status === "completed"
+                        ? "✓ Completed"
+
+                        : status === "current"
+                            ? "🟢 Happening Now"
+
+                            : "⏳ Upcoming";
+
+
+                const isAdded =
+                    addedEvents.has(ev.id);
+
+
+                const item =
+                    document.createElement('div');
+
+
+                item.className =
+                    "timeline-item " + status;
+
+
+                item.style.animationDelay =
+                    (index * 0.05) + "s";
+
+
+                /*
+                    Safely escape the event name
+                    before putting it inside onclick.
+                */
+
+                const safeName =
+                    String(ev.name || "")
+                        .replace(/\\/g, "\\\\")
+                        .replace(/'/g, "\\'");
+
+
+                item.innerHTML = `
+
+                    <div class="timeline-dot"></div>
+
+
+                    <div class="event-card"
+                        onclick="openModal(${ev.id})">
+
+
+                        <div class="event-top">
+
+                            <span class="event-time">
+
+                                ${formatTime(ev.dateObj)}
+
+                            </span>
+
+
+                            <span class="event-status ${status}">
+
+                                ${statusLabel}
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="event-name">
+
+                            ${ev.name || ""}
+
+                        </div>
+
+
+                        <span class="event-category">
+
+                            ${ev.category || "General"}
+
+                        </span>
+
+
+                        <div class="event-actions">
+
+                            <button
+
+                                class="add-btn ${isAdded ? 'added' : ''}"
+
+                                onclick="toggleSchedule(
+                                    event,
+                                    ${ev.id},
+                                    '${safeName}'
+                                )">
+
+                                ${
+                                    isAdded
+                                        ? '✓ Added — Click to Remove'
+                                        : 'Add to My Schedule'
+                                }
+
+                            </button>
+
+                        </div>
+
+
+                    </div>
+
+                `;
+
+
+                timeline.appendChild(item);
+
+            });
+
+
+            requestAnimationFrame(() => {
+
+                document
+                    .querySelectorAll('.timeline-item')
+                    .forEach(el =>
+
+                        el.classList.add('reveal')
+
+                    );
+
+            });
+
+        }
+
+
+        /* =========================================
+           FILTER BUTTONS
+           ========================================= */
+
+        document
+            .getElementById('filters')
+            .addEventListener('click', (e) => {
+
+                if (
+                    e.target.classList.contains('filter-btn')
+                ) {
+
+                    document
+                        .querySelectorAll('.filter-btn')
+                        .forEach(b =>
+                            b.classList.remove('active')
+                        );
+
+
+                    e.target.classList.add('active');
+
+
+                    activeFilter =
+                        e.target.dataset.filter;
+
+
+                    renderTimeline();
+
+                }
+
+            });
+
+
+        /* =========================================
+           ADD / REMOVE EVENT
+           ========================================= */
+
+        function toggleSchedule(event, id, name) {
+
+            event.stopPropagation();
+
+
+            const btn =
+                event.target;
+
+
+            if (addedEvents.has(id)) {
+
+                addedEvents.delete(id);
+
+
+                btn.textContent =
+                    "Add to My Schedule";
+
+
+                btn.classList.remove('added');
+
+
+                showToast(
+                    "Event removed from your schedule.",
+                    true
+                );
+
+            }
+
+            else {
+
+                addedEvents.add(id);
+
+
+                btn.textContent =
+                    "✓ Added — Click to Remove";
+
+
+                btn.classList.add('added');
+
+
+                showToast(
+                    "Event added to your schedule.",
+                    false
+                );
+
+            }
+
+        }
+
+
+        /* =========================================
+           TOAST
+           ========================================= */
+
+        let toastTimeout;
+
+
+        function showToast(message, isRemoved) {
+
+            const toast =
+                document.getElementById('toast');
+
+
+            toast.textContent =
+                message;
+
+
+            toast.classList.toggle(
+                'removed',
+                !!isRemoved
+            );
+
+
+            toast.classList.add('show');
+
+
+            clearTimeout(toastTimeout);
+
+
+            toastTimeout =
+                setTimeout(() => {
+
+                    toast.classList.remove('show');
+
+                }, 2200);
+
+        }
+
+
+        /* =========================================
+           EVENT MODAL
+           ========================================= */
+
+        function openModal(id) {
+
+            const ev =
+                eventsWithDates.find(
+                    e => e.id === id
+                );
+
+
+            if (!ev) {
+                return;
+            }
+
+
+            document.getElementById(
+                'modalTitle'
+            ).textContent =
+                ev.name || "";
+
+
+            document.getElementById(
+                'modalTime'
+            ).textContent =
+                formatTime(ev.dateObj);
+
+
+            document.getElementById(
+                'modalDuration'
+            ).textContent =
+                ev.duration || "";
+
+
+            document.getElementById(
+                'modalCategory'
+            ).textContent =
+                ev.category || "";
+
+
+            document.getElementById(
+                'modalLocation'
+            ).textContent =
+                ev.location || "";
+
+
+            document.getElementById(
+                'modalDesc'
+            ).textContent =
+                ev.desc || "";
+
+
+            document.getElementById(
+                'modalOverlay'
+            ).classList.add('active');
+
+        }
+
+
+        function closeModal() {
+
+            document
+                .getElementById('modalOverlay')
+                .classList.remove('active');
+
+        }
+
+
+        document
+            .getElementById('modalOverlay')
+            .addEventListener('click', function (e) {
+
+                if (e.target === this) {
+
+                    closeModal();
+
+                }
+
+            });
+
+
+        /* =========================================
+           SCROLL TO TOP
+           ========================================= */
+
+        window.addEventListener('scroll', () => {
+
+            const btn =
+                document.getElementById(
+                    'scrollTopBtn'
+                );
+
+
+            if (window.scrollY > 400) {
+
+                btn.classList.add('show');
+
+            }
+
+            else {
+
+                btn.classList.remove('show');
+
+            }
+
+        });
+
+
+        /* =========================================
+           BACK BUTTON
+           ========================================= */
+
+        document
+            .getElementById('stepBackBtn')
+            .addEventListener('click', () => {
+
+                window.location.href =
+                    "{{ url_for('judges_mentors') }}";
+
+            });
+
+
+        /* =========================================
+           NEXT BUTTON
+           SAVE SELECTED EVENTS TO MYSQL
+           ========================================= */
+
+        document
+            .getElementById('stepNextBtn')
+            .addEventListener('click', async () => {
+
+
+                /*
+                    User must select at least
+                    one event.
+                */
+
+                if (addedEvents.size === 0) {
+
+                    showToast(
+                        "⚠ Please add at least one event to your schedule before proceeding.",
+                        true
+                    );
+
+
+                    document
+                        .getElementById('timeline')
+                        .scrollIntoView({
+
+                            behavior: 'smooth',
+
+                            block: 'start'
+
+                        });
+
+
+                    return;
+
+                }
+
+
+                /*
+                    Disable button while saving
+                    to prevent duplicate requests.
+                */
+
+                const nextButton =
+                    document.getElementById(
+                        'stepNextBtn'
+                    );
+
+
+                nextButton.disabled = true;
+
+
+                nextButton.style.opacity = "0.7";
+
+
+                nextButton.style.cursor =
+                    "not-allowed";
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "{{ url_for('save_event_selection') }}",
+                            {
+
+                                method: "POST",
+
+                                headers: {
+
+                                    "Content-Type":
+                                        "application/json",
+                                    "X-CSRFToken":
+                                        document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+
+                                },
+
+                                body: JSON.stringify({
+
+                                    selected_ids:
+                                        Array.from(
+                                            addedEvents
+                                        )
+
+                                })
+
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (!result.success) {
+
+                        showToast(
+                            "⚠ " +
+                            (result.message ||
+                                "Unable to save event selection."),
+                            true
+                        );
+
+
+                        nextButton.disabled =
+                            false;
+
+
+                        nextButton.style.opacity =
+                            "1";
+
+
+                        nextButton.style.cursor =
+                            "pointer";
+
+
+                        return;
+
+                    }
+
+
+                    /*
+                        Selection successfully saved.
+                    */
+
+                    showToast(
+                        "Event selection saved successfully.",
+                        false
+                    );
+
+
+                    /*
+                        Small delay so user can
+                        see success message.
+                    */
+
+                    setTimeout(() => {
+
+                        window.location.href =
+                            "{{ url_for('gallery') }}";
+
+                    }, 500);
+
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        "Event selection error:",
+                        error
+                    );
+
+
+                    showToast(
+                        "⚠ Unable to save your event selection.",
+                        true
+                    );
+
+
+                    nextButton.disabled =
+                        false;
+
+
+                    nextButton.style.opacity =
+                        "1";
+
+
+                    nextButton.style.cursor =
+                        "pointer";
+
+                }
+
+            });
+
+
+        /* =========================================
+           INITIAL LOAD
+           ========================================= */
+
+        function refreshAll() {
+
+            updateStatus();
+
+            updateProgress();
+
+            renderTimeline();
+
+        }
+
+
+        refreshAll();
+
+
+        /* =========================================
+           AUTO UPDATE
+           ========================================= */
+
+        setInterval(() => {
+
+            updateStatus();
+
+            updateProgress();
+
+        }, 30000);
+
+    </script>
+
+</body>
+
+</html>

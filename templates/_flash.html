@@ -1,0 +1,14 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div id="flashMessages" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:90%;">
+    {% for category, message in messages %}
+    <div style="padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;backdrop-filter:blur(10px);
+        {% if category == 'error' %}background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.4);color:#ff6b6b;
+        {% else %}background:rgba(61,220,151,0.15);border:1px solid rgba(61,220,151,0.4);color:#3ddc97;{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+<script>setTimeout(function(){var el=document.getElementById('flashMessages');if(el)el.remove();},5000);</script>
+{% endif %}
+{% endwith %}

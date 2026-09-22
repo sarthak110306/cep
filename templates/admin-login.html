@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Login — Community Hackathon</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    {% include '_flash.html' %}
+
+    <header>
+        <div class="eyebrow">Admin Portal</div>
+
+        <h1>Community Hackathon 2026</h1>
+
+        <p>
+            Secure admin access to manage the hackathon platform.
+        </p>
+    </header>
+
+
+    <div style="max-width:420px;margin:40px auto;padding:0 20px;">
+
+        <div class="login-box"
+             style="position:relative;transform:none;opacity:1;">
+
+            <h2>Admin Login</h2>
+
+            <p class="hint">
+                Login to access the admin dashboard
+            </p>
+
+
+            <form method="POST"
+                  action="{{ url_for('admin_login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Admin Email"
+                    required
+                >
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    required
+                >
+
+                <button class="btn" type="submit">
+                    Login to Dashboard
+                </button>
+
+            </form>
+
+
+            <!-- Admin Sign Up -->
+
+            <div style="
+                margin-top:25px;
+                padding-top:20px;
+                border-top:1px solid rgba(255,255,255,0.15);
+                text-align:center;
+            ">
+
+                <p class="hint" style="margin-bottom:10px;">
+                    New Admin?
+                </p>
+
+                <a
+                    href="{{ url_for('admin_signup') }}"
+                    class="btn"
+                    style="
+                        display:block;
+                        text-decoration:none;
+                        text-align:center;
+                    "
+                >
+                    Create Admin Account
+                </a>
+
+            </div>
+
+
+            <p class="foot" style="margin-top:20px;">
+                <a href="{{ url_for('index') }}">
+                    ← Back to User Login
+                </a>
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <footer>
+        © 2026 Community Hackathon. All Rights Reserved.
+    </footer>
+
+</body>
+</html>

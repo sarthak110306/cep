@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Registration — Community Hackathon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+    --bg:#07120f;
+    --bg-panel:#0c1c17;
+    --bg-card:#102821;
+    --border:rgba(255,255,255,0.08);
+    --accent:#3ddc97;
+    --accent-soft:#f0a860;
+    --text:#e9f5f0;
+    --text-dim:#8fa89e;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    position:relative;
+    overflow-x:hidden;
+}
+
+body::before{
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none;
+    z-index:0;
+}
+
+/* ===== Nav ===== */
+nav{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(12,28,23,0.75);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:16px;
+    text-align:center;
+}
+
+nav a{
+    color:var(--text-dim);
+    text-decoration:none;
+    margin:0 6px;
+    font-weight:500;
+    font-size:13.5px;
+    padding:9px 16px;
+    border-radius:8px;
+    transition:all 0.2s ease;
+}
+
+nav a:hover, nav a.active{
+    color:var(--text);
+    background:rgba(255,255,255,0.06);
+}
+
+/* ===== Hero ===== */
+.hero{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:70px 20px 50px;
+    background: radial-gradient(ellipse at top, rgba(61,220,151,0.14), transparent 60%),
+                linear-gradient(180deg,#0a1a15,#07120f);
+    border-bottom:1px solid var(--border);
+}
+
+.hero .eyebrow{
+    display:inline-block;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+    margin-bottom:20px;
+    padding:6px 14px;
+    border:1px solid rgba(61,220,151,0.35);
+    border-radius:30px;
+}
+
+.hero h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:42px;
+    font-weight:700;
+    letter-spacing:-1px;
+    max-width:700px;
+    margin:0 auto 16px;
+    line-height:1.15;
+}
+
+.hero p{
+    font-size:16px;
+    color:var(--text-dim);
+    max-width:520px;
+    margin:0 auto;
+    letter-spacing:0.3px;
+}
+
+/* ===== Form section ===== */
+.form-section{
+    position:relative;
+    z-index:1;
+    max-width:760px;
+    margin:60px auto;
+    padding:0 20px;
+}
+
+.form-card{
+    background:rgba(16,40,33,0.55);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:44px;
+    backdrop-filter:blur(14px);
+}
+
+.form-card h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:22px;
+    margin-bottom:6px;
+}
+
+.form-card .sub{
+    color:var(--text-dim);
+    font-size:13.5px;
+    margin-bottom:32px;
+}
+
+.field-group{
+    margin-bottom:22px;
+}
+
+.field-group label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--accent);
+    letter-spacing:0.3px;
+    margin-bottom:8px;
+}
+
+.field-group input,
+.field-group select{
+    width:100%;
+    padding:13px 15px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.03);
+    color:var(--text);
+    font-size:14.5px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+}
+
+.field-group input:focus,
+.field-group select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px rgba(61,220,151,0.12);
+}
+
+.field-group input::placeholder{ color:#4b5f57; }
+
+.field-group select{ cursor:pointer; }
+.field-group select option{ background:var(--bg-panel); color:var(--text); }
+
+.error-msg{
+    color:#ff6b6b;
+    font-size:12px;
+    margin-top:6px;
+    display:none;
+}
+
+.field-group.error input,
+.field-group.error select{ border-color:#ff6b6b; }
+
+.field-group.error .error-msg{ display:block; }
+
+.row2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+
+.members-block{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:26px;
+}
+
+.members-block-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+}
+
+.members-block-head h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15.5px;
+    color:var(--text);
+}
+
+.member-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+    align-items:center;
+}
+
+.member-row input{
+    flex:1;
+}
+
+.remove-member{
+    background:rgba(255,107,107,0.1);
+    border:1px solid rgba(255,107,107,0.3);
+    color:#ff6b6b;
+    width:38px;
+    height:38px;
+    min-width:38px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s ease;
+}
+
+.remove-member:hover{ background:rgba(255,107,107,0.2); }
+
+.add-member-btn{
+    background:rgba(61,220,151,0.08);
+    border:1px solid rgba(61,220,151,0.3);
+    color:var(--accent);
+    padding:9px 16px;
+    border-radius:10px;
+    font-size:12.5px;
+    font-weight:600;
+    font-family:inherit;
+    cursor:pointer;
+    transition:background .2s ease;
+}
+
+.add-member-btn:hover{ background:rgba(61,220,151,0.15); }
+
+.add-member-btn:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+}
+
+.member-count{
+    font-size:12px;
+    color:var(--text-dim);
+}
+
+.submit-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,var(--accent),#7fedbf);
+    color:#07231a;
+    font-size:15px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    transition:transform .2s ease, box-shadow .2s ease;
+    position:relative;
+    overflow:hidden;
+}
+
+.submit-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 28px rgba(61,220,151,0.35);
+}
+
+.ripple{
+    position:absolute;
+    border-radius:50%;
+    background:rgba(255,255,255,0.5);
+    transform:scale(0);
+    animation:rippleAnim .6s linear;
+    pointer-events:none;
+}
+
+@keyframes rippleAnim{
+    to{ transform:scale(3); opacity:0; }
+}
+
+/* ===== Success view ===== */
+.success-view{
+    display:none;
+    text-align:center;
+    padding:20px 0;
+}
+
+.success-view .tick{
+    width:64px;
+    height:64px;
+    margin:0 auto 20px;
+    background:rgba(61,220,151,0.1);
+    border:1px solid rgba(61,220,151,0.35);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    color:var(--accent);
+}
+
+.success-view h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:24px;
+    margin-bottom:10px;
+}
+
+.success-view p{
+    color:var(--text-dim);
+    font-size:14.5px;
+    margin-bottom:22px;
+    line-height:1.6;
+}
+
+.success-summary{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px;
+    text-align:left;
+    margin-bottom:24px;
+}
+
+.success-summary .row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+    font-size:13.5px;
+}
+
+.success-summary .row:last-child{ border-bottom:none; }
+.success-summary .row span:first-child{ color:var(--text-dim); }
+.success-summary .row span:last-child{ color:var(--text); font-weight:600; text-align:right; }
+
+.page-nav {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.page-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    padding: 13px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.page-nav-btn:hover {
+    transform: translateY(-3px);
+    border-color: rgba(61, 220, 151, 0.4);
+}
+ /* next button  */
+.page-nav-btn.next {
+    background: linear-gradient(90deg, var(--accent), #7fedbf);
+    color: #07231a;
+    border-color: transparent;
+    box-shadow: 0 10px 25px rgba(61, 220, 151, 0.25);
+}
+
+.page-nav-btn.next:hover {
+    box-shadow: 0 14px 32px rgba(61, 220, 151, 0.4);
+}
+
+.page-nav-btn .arrow {
+    font-size: 16px;
+    line-height: 1;
+    transition: transform .2s ease;
+}
+
+.page-nav-btn:hover .arrow-left {
+    transform: translateX(-3px);
+}
+
+.page-nav-btn:hover .arrow-right {
+    transform: translateX(3px);
+}
+
+@media(max-width:600px) {
+    .page-nav {
+        justify-content: center;
+    }
+
+    .page-nav-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 130px;
+    }
+}
+
+/* ===== Toast ===== */
+.toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(61, 220, 151, 0.12);
+    border: 1px solid rgba(61, 220, 151, 0.4);
+    color: var(--accent);
+    padding: 14px 26px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease, transform .3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ===== Footer ===== */
+footer{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:34px 20px 60px;
+    color:var(--text-dim);
+    font-size:13px;
+    letter-spacing:0.3px;
+    border-top:1px solid var(--border);
+    margin-top:40px;
+}
+
+@media(max-width:600px){
+    .hero h1{ font-size:30px; }
+    .form-card{ padding:28px 22px; }
+    .row2{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+{% include '_flash.html' %}
+{% from '_nav.html' import site_nav %}
+{{ site_nav('team') }}
+
+<section class="hero">
+    <span class="eyebrow">Team Registration</span>
+    <h1>Register Your Team</h1>
+    <p>Fill in your team details and pick the challenge you want to solve. Let's build something impactful together.</p>
+</section>
+
+<section class="form-section">
+    <div class="form-card">
+
+        <div id="formView">
+            <h2>Team Details</h2>
+            <p class="sub">All fields marked with * are required</p>
+
+            <form id="registerForm" method="POST" action="{{ url_for('team_registration') }}" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="field-group" id="teamNameGroup">
+                    <label>Team Name *</label>
+                    <input type="text" name="team_name" id="teamName" placeholder="e.g. Code Innovators" value="{{ existing_team.team_name if existing_team else '' }}" required>
+                    <p class="error-msg">Please enter your team name.</p>
+                </div>
+
+                <div class="field-group" id="collegeNameGroup">
+                    <label>College Name *</label>
+                    <input type="text" name="college" id="collegeName" placeholder="e.g. ABC Institute of Technology" value="{{ existing_team.college if existing_team else '' }}" required>
+                    <p class="error-msg">Please enter your college name.</p>
+                </div>
+
+                <div class="row2">
+                    <div class="field-group" id="leaderNameGroup">
+                        <label>Team Leader Name *</label>
+                        <input type="text" name="leader_name" id="leaderName" placeholder="Full name" value="{{ existing_team.team_leader if existing_team else '' }}" required>
+                        <p class="error-msg">Please enter the leader's name.</p>
+                    </div>
+                    <div class="field-group" id="leaderPhoneGroup">
+                        <label>Phone Number *</label>
+                        <input type="tel" name="phone" id="leaderPhone" placeholder="10-digit number" value="{{ existing_team.phone if existing_team else '' }}" required>
+                        <p class="error-msg">Please enter a valid 10-digit phone number.</p>
+                    </div>
+                </div>
+
+                <div class="field-group" id="leaderEmailGroup">
+                    <label>Team Leader Email *</label>
+                    <input type="email" name="email" id="leaderEmail" placeholder="you@example.com" value="{{ existing_team.email if existing_team else '' }}" required>
+                    <p class="error-msg">Please enter a valid email address.</p>
+                </div>
+
+                <div class="members-block">
+                    <div class="members-block-head">
+                        <h3>Team Members (max 3)</h3>
+                        <span class="member-count" id="memberCount">{{ existing_members|length if existing_members else 0 }} / 3 added</span>
+                    </div>
+                    <div id="membersContainer">
+                        {% for member in existing_members or [] %}
+                        <div class="member-row">
+                            <input type="text" name="members" placeholder="Member full name" class="member-input" value="{{ member }}">
+                            <button type="button" class="remove-member" onclick="removeMember(this)">✕</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="add-member-btn" id="addMemberBtn" onclick="addMember()">+ Add Member</button>
+                </div>
+
+                <div class="field-group" id="challengeGroup">
+                    <label>Selected Problem Statement *</label>
+                    <select name="problem_statement_id" id="challengeSelect" required>
+                        <option value="">-- Choose a problem statement --</option>
+                        {% for p in problems %}
+                        <option value="{{ p.id }}" {% if selected_problem_id == p.id or (existing_team and existing_team.problem_statement_id == p.id) %}selected{% endif %}>
+                            [{{ p.category }}] {{ p.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="error-msg">Please select a problem statement.</p>
+                </div>
+
+                <button type="submit" class="submit-btn">Register Team</button>
+            </form>
+        </div>
+
+        <div id="successView" class="success-view">
+            <div class="tick">✓</div>
+            <h2>Team Registered Successfully</h2>
+            <p>Your team has been registered for the Community Hackathon for Social Innovation. Check your email for further updates.</p>
+
+            <div class="success-summary" id="summaryBox"></div>
+
+            <button class="submit-btn" onclick="resetForm()">Register Another Team</button>
+        </div>
+
+    </div>
+</section>
+<div class="page-nav">
+    <a href="{{ url_for('problems') }}" class="page-nav-btn back">
+        <span class="arrow arrow-left">←</span> Back
+    </a>
+    <button class="page-nav-btn next" onclick="goNext()">
+        Next <span class="arrow arrow-right">→</span>
+    </button>
+</div>
+
+<div class="toast" id="toast">✅ Team Registered Successfully</div>
+
+<footer>
+    © 2026 Community Hackathon for Social Innovation
+</footer>
+
+<script>
+const maxMembers = 3;
+let memberCount = document.querySelectorAll('.member-input').length;
+
+updateMemberCount();
+let registrationDone = false; // track karega ki registration complete hui ya nahi
+
+function addMember(){
+    if(memberCount >= maxMembers) return;
+    memberCount++;
+
+    const container = document.getElementById('membersContainer');
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = `
+        <input type="text" name="members" placeholder="Member ${memberCount} full name" class="member-input">
+        <button type="button" class="remove-member" onclick="removeMember(this)">✕</button>
+    `;
+    container.appendChild(row);
+
+    updateMemberCount();
+}
+
+function removeMember(btn){
+    btn.parentElement.remove();
+    memberCount--;
+    updateMemberCount();
+}
+
+function updateMemberCount(){
+    document.getElementById('memberCount').textContent = memberCount + " / " + maxMembers + " added";
+    document.getElementById('addMemberBtn').disabled = memberCount >= maxMembers;
+}
+
+function showError(groupId, show){
+    const group = document.getElementById(groupId);
+    if(show) group.classList.add('error');
+    else group.classList.remove('error');
+}
+
+function validatePhone(phone){
+    return /^[0-9]{10}$/.test(phone.trim());
+}
+
+function validateEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e){
+    const teamName = document.getElementById('teamName').value.trim();
+    const collegeName = document.getElementById('collegeName').value.trim();
+    const leaderName = document.getElementById('leaderName').value.trim();
+    const leaderPhone = document.getElementById('leaderPhone').value.trim();
+    const leaderEmail = document.getElementById('leaderEmail').value.trim();
+    const challenge = document.getElementById('challengeSelect').value;
+
+    let valid = true;
+    if(teamName === ""){ showError('teamNameGroup', true); valid = false; } else { showError('teamNameGroup', false); }
+    if(collegeName === ""){ showError('collegeNameGroup', true); valid = false; } else { showError('collegeNameGroup', false); }
+    if(leaderName === ""){ showError('leaderNameGroup', true); valid = false; } else { showError('leaderNameGroup', false); }
+    if(!validatePhone(leaderPhone)){ showError('leaderPhoneGroup', true); valid = false; } else { showError('leaderPhoneGroup', false); }
+    if(!validateEmail(leaderEmail)){ showError('leaderEmailGroup', true); valid = false; } else { showError('leaderEmailGroup', false); }
+    if(challenge === ""){ showError('challengeGroup', true); valid = false; } else { showError('challengeGroup', false); }
+    if(!valid) e.preventDefault();
+});
+
+function goNext(){
+    window.location.href = "/judges-mentors";
+}
+
+let warningTimeout;
+function showWarning(message){
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.style.background = "rgba(240, 96, 96, 0.12)";
+    toast.style.borderColor = "rgba(240, 96, 96, 0.4)";
+    toast.style.color = "#f06060";
+    toast.classList.add('show');
+    clearTimeout(warningTimeout);
+    warningTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+        toast.style.background = "";
+        toast.style.borderColor = "";
+        toast.style.color = "";
+        toast.textContent = "✅ Team Registered Successfully";
+    }, 2200);
+}
+
+function createRipple(e){
+    const btn = e.target.closest('.submit-btn');
+    if(!btn) return;
+    const circle = document.createElement('span');
+    const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+    const radius = diameter / 2;
+    const rect = btn.getBoundingClientRect();
+    circle.style.width = circle.style.height = diameter + "px";
+    circle.style.left = (e.clientX - rect.left - radius) + "px";
+    circle.style.top = (e.clientY - rect.top - radius) + "px";
+    circle.classList.add('ripple');
+    const existing = btn.querySelector('.ripple');
+    if(existing) existing.remove();
+    btn.appendChild(circle);
+    setTimeout(() => circle.remove(), 600);
+}
+
+document.addEventListener('click', function(e){
+    if(e.target.closest('.submit-btn')){
+        createRipple(e);
+    }
+});
+</script>
+
+</body>
+</html>

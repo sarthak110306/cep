@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Certificates</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #062d24;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: auto;
+            padding: 50px 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 38px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #b8d8ce;
+            font-size: 16px;
+        }
+
+        .certificate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .certificate-card {
+            background: #0b4034;
+            border: 1px solid #286b5b;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .certificate-icon {
+            font-size: 55px;
+            margin-bottom: 15px;
+        }
+
+        .certificate-card h2 {
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .certificate-type {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 20px;
+            background: #145847;
+            color: #bff3df;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .certificate-info {
+            text-align: left;
+            margin: 20px 0;
+            line-height: 1.8;
+            color: #d5e8e2;
+        }
+
+        .certificate-info strong {
+            color: white;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 12px 22px;
+            background: #ffffff;
+            color: #073d31;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .no-certificates {
+            text-align: center;
+            background: #0b4034;
+            border: 1px solid #286b5b;
+            border-radius: 16px;
+            padding: 50px 20px;
+            color: #b8d8ce;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 30px;
+            color: #bff3df;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 30px;
+            }
+
+            .container {
+                width: 94%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div style="font-size: 50px;">🏆</div>
+        <h1>My Certificates</h1>
+        <p>View your Community Based Hackathon for Social Innovation certificates.</p>
+    </div>
+
+    {% if certificates %}
+
+        <div class="certificate-grid">
+
+            {% for certificate in certificates %}
+
+                <div class="certificate-card">
+
+                    {% if certificate.certificate_type == "Winner" %}
+                        <div class="certificate-icon">🏆</div>
+                    {% else %}
+                        <div class="certificate-icon">🎓</div>
+                    {% endif %}
+
+                    <h2>
+                        {{ certificate.certificate_type }} Certificate
+                    </h2>
+
+                    <div class="certificate-type">
+                        {{ certificate.certificate_type }}
+                    </div>
+
+                    <div class="certificate-info">
+
+                        <p>
+                            <strong>Certificate ID:</strong>
+                            {{ certificate.certificate_id }}
+                        </p>
+
+                        {% if certificate.team_name %}
+                            <p>
+                                <strong>Team:</strong>
+                                {{ certificate.team_name }}
+                            </p>
+                        {% endif %}
+
+                        {% if certificate.position %}
+                            <p>
+                                <strong>Position:</strong>
+                                {{ certificate.position }}
+                            </p>
+                        {% endif %}
+
+                        {% if certificate.problem_statement %}
+                            <p>
+                                <strong>Challenge:</strong>
+                                {{ certificate.problem_statement }}
+                            </p>
+                        {% endif %}
+
+                        <p>
+                            <strong>Issued:</strong>
+                            {{ certificate.issued_at }}
+                        </p>
+
+                    </div>
+
+                   <a
+    href="{{ url_for('download_certificate', certificate_id=certificate.certificate_id) }}"
+    class="download-btn">
+    📄 Download Certificate
+</a>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="no-certificates">
+
+            <div style="font-size: 50px; margin-bottom: 15px;">
+                📜
+            </div>
+
+            <h2>No Certificate Available</h2>
+
+            <p style="margin-top: 10px;">
+                Your certificate will appear here once it is issued by the organizers.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+    <div style="text-align: center;">
+        <a href="{{ url_for('registration_summary') }}" class="back-btn">
+            ← Back to Registration Summary
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ problem.title }} — Community Hackathon</title>
+    <style>
+        :root{--bg:#07120f;--panel:#102821;--border:rgba(255,255,255,.1);--accent:#3ddc97;--muted:#9bb3a8;--text:#e9f5f0}
+        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+        nav{padding:16px;text-align:center;border-bottom:1px solid var(--border);background:#0c1c17} nav a{color:var(--muted);margin:0 8px;text-decoration:none;font-size:14px} nav a:hover{color:var(--accent)}
+        main{max-width:850px;margin:70px auto;padding:0 24px}.badge{color:var(--accent);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+        h1{font-size:42px;margin:14px 0}.category{color:#f0a860;font-weight:600}.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:30px;margin-top:28px;line-height:1.7}.label{color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-top:22px}.button{display:inline-block;margin-top:28px;padding:13px 20px;border-radius:10px;background:var(--accent);color:#07231a;text-decoration:none;font-weight:700}
+    </style>
+</head>
+<body>
+{% include '_flash.html' %}
+{% from '_nav.html' import site_nav %}
+{{ site_nav('problems') }}
+<main>
+    <span class="badge">Problem Statement</span>
+    <h1>{{ problem.icon }} {{ problem.title }}</h1>
+    <div class="category">{{ problem.category }} · {{ problem.difficulty }}</div>
+    <section class="card">
+        <div class="label">Challenge</div>
+        <p>{{ problem.desc }}</p>
+        {% if problem.tech %}<div class="label">Suggested Technologies</div><p>{{ problem.tech }}</p>{% endif %}
+        {% if problem.impact %}<div class="label">Social Impact</div><p>{{ problem.impact }}</p>{% endif %}
+        <a class="button" href="{{ url_for('team_registration') }}">Register Your Team</a>
+    </section>
+</main>
+</body>
+</html>

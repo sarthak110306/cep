@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Community Hackathon</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    {% include '_flash.html' %}
+
+    <header>
+        <div class="eyebrow">Community Hackathon 2026</div>
+
+        <h1>
+            Innovate. Collaborate. Create Impact.
+        </h1>
+
+        <p>
+            Build innovative solutions for real-world social challenges.
+        </p>
+
+        <div class="btn-group">
+            <button class="btn" onclick="openLogin()">
+                User Login
+            </button>
+
+            <button class="btn1" onclick="Adminlogin()">
+                Admin Login
+            </button>
+        </div>
+    </header>
+
+    <footer>
+        © 2026 Community Hackathon. All Rights Reserved.
+    </footer>
+
+
+    <!-- ================= LOGIN MODAL ================= -->
+
+    <div id="loginModal" class="modal-overlay">
+
+        <div class="login-box">
+
+            <button class="close-btn" onclick="closeLogin()">
+                ×
+            </button>
+
+
+            <!-- ================= LOGIN FORM ================= -->
+
+            <div id="loginFormView">
+
+                <h2 id="loginTitle">
+                    Welcome Back
+                </h2>
+
+                <p class="hint" id="loginHint">
+                    Login to register your team
+                </p>
+
+                <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        required
+                    >
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                    >
+
+                    <button class="btn" type="submit">
+                        Login
+                    </button>
+
+                </form>
+
+                <!-- "Forgot Password?" link removed: the OTP-based backend
+                     route it pointed to was reverted, and the original
+                     pre-OTP password-reset implementation could not be
+                     recovered from this project (no git history / backup
+                     found). See project report for details. -->
+
+                <p class="foot" id="loginSignupLink">
+                    Don't have an account?
+
+                    <a href="#" onclick="showSignUp(event)">
+                        Sign Up
+                    </a>
+                </p>
+
+            </div>
+
+
+            <!-- ================= SIGN UP FORM ================= -->
+
+            <div id="signUpFormView" style="display:none;">
+
+                <h2>
+                    Create Account
+                </h2>
+
+                <p class="hint">
+                    Sign up to join the Community Hackathon
+                </p>
+
+                <form method="POST" action="{{ url_for('signup') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Full Name"
+                        required
+                    >
+
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        required
+                    >
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password (min 5 characters)"
+                        required
+                    >
+
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        placeholder="Confirm Password"
+                        required
+                    >
+
+                    <button class="btn" type="submit">
+                        Create Account
+                    </button>
+
+                </form>
+
+                <p class="foot">
+
+                    Already have an account?
+
+                    <a href="#" onclick="showLoginForm(event)">
+                        Login
+                    </a>
+
+                </p>
+
+            </div>
+
+
+            <!-- ================= FORGOT PASSWORD / OTP VIEWS REMOVED =================
+                 The OTP-based password reset backend (forgot_password,
+                 verify_reset_otp, reset_password) was reverted. These four
+                 views (forgotPasswordView, otpVerificationView,
+                 resetPasswordView, resetSuccessView) called those routes
+                 and have been removed so the page has no dead/broken links.
+                 The original pre-OTP reset flow could not be recovered from
+                 this project - see report. -->
+
+            <!-- ================= SIGN UP SUCCESS ================= -->
+
+            <div
+                id="signUpSuccessView"
+                class="welcome-msg"
+                style="display:none;"
+            >
+
+                <div class="tick">
+                    ✓
+                </div>
+
+                <h2>
+                    Account Created
+                </h2>
+
+                <p id="signUpSuccessText">
+                    Your account has been created.
+                    You can now log in.
+                </p>
+
+                <button
+                    class="btn"
+                    onclick="showLoginForm()"
+                >
+                    Go to Login
+                </button>
+
+            </div>
+
+
+            <!-- ================= LOGIN SUCCESS ================= -->
+
+            <div
+                id="welcomeView"
+                class="welcome-msg"
+                style="display:none;"
+            >
+
+                <div class="tick">
+                    ✓
+                </div>
+
+                <h2>
+                    Login Successful
+                </h2>
+
+                <p>
+                    Welcome back!
+                    You can now register your team.
+                </p>
+
+                <button
+                    class="btn"
+                    onclick="closeLogin()"
+                >
+                    Continue
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+
+    {% if request.args.get('signup') %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            openLogin();
+            showSignUp();
+        });
+    </script>
+
+    {% endif %}
+
+</body>
+
+</html>

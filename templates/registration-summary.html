@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Registration Summary — Community Hackathon for Social Innovation</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --bg:#07120f;
+    --bg-panel:#0c1c17;
+    --bg-card:#102821;
+    --border:rgba(255,255,255,0.08);
+    --accent:#3ddc97;
+    --accent-soft:#f0a860;
+    --text:#e9f5f0;
+    --text-dim:#8fa89e;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    position:relative;
+    overflow-x:hidden;
+}
+
+body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+
+    background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
+
+    background-size:48px 48px;
+    pointer-events:none;
+    z-index:0;
+}
+
+
+/* NAV */
+
+nav{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(12,28,23,0.75);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:16px;
+    text-align:center;
+}
+
+nav a{
+    color:var(--text-dim);
+    text-decoration:none;
+    margin:0 6px;
+    font-weight:500;
+    font-size:13.5px;
+    padding:9px 16px;
+    border-radius:8px;
+    transition:all 0.2s ease;
+}
+
+nav a:hover,
+nav a.active{
+    color:var(--text);
+    background:rgba(255,255,255,0.06);
+}
+
+
+/* HERO */
+
+.hero{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:90px 20px 50px;
+
+    background:
+        radial-gradient(
+            ellipse at top,
+            rgba(61,220,151,0.14),
+            transparent 60%
+        ),
+        linear-gradient(180deg,#0a1a15,#07120f);
+
+    border-bottom:1px solid var(--border);
+}
+
+.hero .badge{
+    display:inline-block;
+    font-size:11.5px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:20px;
+    padding:7px 16px;
+    border:1px solid rgba(61,220,151,0.35);
+    border-radius:30px;
+}
+
+.hero h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:44px;
+    font-weight:700;
+    letter-spacing:-1px;
+    max-width:700px;
+    margin:0 auto 16px;
+    line-height:1.15;
+
+    background:
+        linear-gradient(
+            90deg,
+            #e9f5f0,
+            #3ddc97 60%,
+            #f0a860
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero p{
+    font-size:16px;
+    color:var(--text-dim);
+    max-width:520px;
+    margin:0 auto;
+    letter-spacing:0.3px;
+}
+
+
+/* SUMMARY */
+
+.summary-section{
+    position:relative;
+    z-index:1;
+    max-width:760px;
+    margin:-40px auto 0;
+    padding:0 20px 50px;
+}
+
+.summary-card{
+    background:rgba(16,40,33,0.6);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:14px 34px 34px;
+    backdrop-filter:blur(16px);
+    box-shadow:0 25px 60px rgba(0,0,0,0.35);
+}
+
+
+/* STATUS STRIP */
+
+.status-strip{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:20px 0 8px;
+    padding:14px 20px;
+
+    background:rgba(61,220,151,0.1);
+    border:1px solid rgba(61,220,151,0.35);
+
+    border-radius:14px;
+
+    color:var(--accent);
+    font-weight:700;
+    font-size:14.5px;
+}
+
+.status-strip .tick{
+    width:24px;
+    height:24px;
+    border-radius:50%;
+
+    background:var(--accent);
+    color:#07231a;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:13px;
+    flex-shrink:0;
+}
+
+
+/* SUMMARY BLOCK */
+
+.summary-block{
+    padding:26px 0;
+    border-bottom:1px solid var(--border);
+}
+
+.summary-block:last-of-type{
+    border-bottom:none;
+    padding-bottom:6px;
+}
+
+.summary-block h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px;
+    font-weight:700;
+
+    color:var(--accent-soft);
+
+    letter-spacing:0.3px;
+    text-transform:uppercase;
+
+    margin-bottom:16px;
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+
+/* SUMMARY ROW */
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+
+    padding:9px 0;
+
+    font-size:14.5px;
+}
+
+.summary-row span:first-child{
+    color:var(--text-dim);
+}
+
+.summary-row span:last-child{
+    color:var(--text);
+    font-weight:600;
+    text-align:right;
+}
+
+
+/* DIFFICULTY */
+
+.difficulty-tag{
+    display:inline-block;
+
+    font-size:11.5px;
+    font-weight:700;
+
+    padding:4px 12px;
+
+    border-radius:20px;
+
+    background:rgba(240,168,96,0.12);
+
+    color:var(--accent-soft);
+
+    border:1px solid rgba(240,168,96,0.35);
+}
+
+
+/* EVENTS */
+
+.event-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.event-card{
+    background:rgba(255,255,255,0.035);
+
+    border:1px solid var(--border);
+
+    border-radius:12px;
+
+    padding:16px 18px;
+
+    transition:all 0.2s ease;
+}
+
+.event-card:hover{
+    border-color:rgba(61,220,151,0.3);
+    background:rgba(61,220,151,0.04);
+}
+
+.event-name{
+    color:var(--text);
+
+    font-family:'Space Grotesk',sans-serif;
+
+    font-size:16px;
+    font-weight:700;
+
+    margin-bottom:8px;
+}
+
+.event-info{
+    display:flex;
+    flex-wrap:wrap;
+
+    gap:8px 18px;
+
+    color:var(--text-dim);
+
+    font-size:13px;
+}
+
+.event-info span{
+    display:inline-block;
+}
+
+.event-description{
+    margin-top:9px;
+
+    color:var(--text-dim);
+
+    font-size:13px;
+
+    line-height:1.6;
+}
+
+
+/* FAQ */
+
+.faq-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.faq-item{
+    background:rgba(255,255,255,0.035);
+
+    border:1px solid var(--border);
+
+    border-radius:12px;
+
+    overflow:hidden;
+}
+
+.faq-question{
+    padding:15px 18px;
+
+    color:var(--text);
+
+    font-weight:600;
+
+    font-size:14px;
+}
+
+.faq-answer{
+    padding:0 18px 15px;
+
+    color:var(--text-dim);
+
+    font-size:13.5px;
+
+    line-height:1.6;
+}
+
+.no-data{
+    color:var(--text-dim);
+
+    font-size:14px;
+
+    padding:10px 0;
+}
+
+
+/* ACTION BUTTONS */
+
+.summary-actions{
+    display:flex;
+
+    gap:16px;
+
+    margin-top:30px;
+
+    flex-wrap:wrap;
+}
+
+.summary-btn{
+    flex:1;
+
+    min-width:180px;
+
+    text-align:center;
+
+    padding:15px;
+
+    border-radius:12px;
+
+    font-size:14.5px;
+
+    font-weight:700;
+
+    font-family:inherit;
+
+    cursor:pointer;
+
+    border:1px solid var(--border);
+
+    text-decoration:none;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        border-color .2s ease,
+        background .2s ease;
+}
+
+.summary-btn:hover{
+    transform:translateY(-2px);
+}
+
+.summary-btn.edit{
+    background:rgba(255,255,255,0.04);
+
+    color:var(--text);
+}
+
+.summary-btn.confirm{
+    background:
+        linear-gradient(
+            90deg,
+            var(--accent),
+            #7fedbf
+        );
+
+    color:#07231a;
+
+    border-color:transparent;
+
+    box-shadow:
+        0 10px 25px rgba(61,220,151,0.25);
+}
+
+.summary-btn.confirm.done{
+    background:rgba(61,220,151,0.15);
+
+    color:var(--accent);
+
+    box-shadow:none;
+}
+
+
+/* CERTIFICATE BUTTON */
+
+.summary-btn.certificate{
+    background:
+        linear-gradient(
+            90deg,
+            #f0a860,
+            #ffd39b
+        );
+
+    color:#2a190b;
+
+    border-color:transparent;
+
+    box-shadow:
+        0 10px 25px rgba(240,168,96,0.20);
+}
+
+
+/* REGISTRATION ID */
+
+.reg-id{
+    font-family:'Space Grotesk',sans-serif;
+
+    font-size:18px;
+
+    color:var(--accent);
+
+    letter-spacing:1px;
+}
+
+
+/* FOOTER */
+
+footer{
+    position:relative;
+
+    z-index:1;
+
+    text-align:center;
+
+    padding:40px 20px;
+
+    color:var(--text-dim);
+
+    font-size:13px;
+
+    border-top:1px solid var(--border);
+
+    margin-top:40px;
+}
+
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+    .hero{
+        padding:70px 15px 45px;
+    }
+
+    .hero h1{
+        font-size:34px;
+    }
+
+    .summary-section{
+        padding-left:12px;
+        padding-right:12px;
+    }
+
+    .summary-card{
+        padding:12px 20px 28px;
+    }
+
+    .summary-row{
+        flex-direction:column;
+        gap:4px;
+    }
+
+    .summary-row span:last-child{
+        text-align:left;
+    }
+
+    .summary-actions{
+        flex-direction:column;
+    }
+
+    .summary-btn{
+        width:100%;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+{% include '_flash.html' %}
+
+{% from '_nav.html' import site_nav %}
+
+{{ site_nav('summary') }}
+
+
+<!-- HERO -->
+
+<section class="hero">
+
+    <span class="badge">
+        FINAL STEP
+    </span>
+
+    <h1>
+        Registration Summary
+    </h1>
+
+    <p>
+        Review everything you've selected across the previous steps before confirming.
+    </p>
+
+</section>
+
+
+<!-- SUMMARY -->
+
+<section class="summary-section">
+
+    <div class="summary-card">
+
+
+        <!-- Registration Status -->
+
+        <div class="status-strip">
+
+            <span class="tick">
+                ✓
+            </span>
+
+            <span id="statusText">
+
+                {% if summary.status == 'Confirmed' %}
+
+                    Registration Confirmed
+
+                {% else %}
+
+                    Registration Pending Confirmation
+
+                {% endif %}
+
+            </span>
+
+        </div>
+
+
+        <!-- Registration ID -->
+
+        {% if summary.registration_id %}
+
+        <div class="summary-block">
+
+            <h3>
+                🎫 Registration ID
+            </h3>
+
+            <div class="summary-row">
+
+                <span>
+                    Your ID
+                </span>
+
+                <span class="reg-id">
+                    {{ summary.registration_id }}
+                </span>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- Participant Details -->
+
+        <div class="summary-block">
+
+            <h3>
+                👤 Participant Details
+            </h3>
+
+            <div class="summary-row">
+
+                <span>
+                    Name
+                </span>
+
+                <span>
+                    {{ summary.user_name }}
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    Email
+                </span>
+
+                <span>
+                    {{ summary.user_email }}
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    College
+                </span>
+
+                <span>
+                    {{ summary.college }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Team Details -->
+
+        <div class="summary-block">
+
+            <h3>
+                👥 Team Details
+            </h3>
+
+            <div class="summary-row">
+
+                <span>
+                    Team Name
+                </span>
+
+                <span>
+                    {{ summary.team_name }}
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    Team Members
+                </span>
+
+                <span>
+
+                    {{ summary.member_count or 1 }}
+
+                    {% if summary.members %}
+
+                        (+ {{ summary.members|join(', ') }})
+
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    Team Leader
+                </span>
+
+                <span>
+                    {{ summary.team_leader }}
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    Phone
+                </span>
+
+                <span>
+                    {{ summary.phone }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Selected Challenge -->
+
+        <div class="summary-block">
+
+            <h3>
+                🧩 Selected Challenge
+            </h3>
+
+            <div class="summary-row">
+
+                <span>
+                    Problem
+                </span>
+
+                <span>
+                    {{ summary.problem_title }}
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    Category
+                </span>
+
+                <span>
+                    {{ summary.category }}
+                </span>
+
+            </div>
+
+            <div class="summary-row">
+
+                <span>
+                    Difficulty
+                </span>
+
+                <span>
+
+                    <span class="difficulty-tag">
+                        {{ summary.difficulty or 'Medium' }}
+                    </span>
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Selected Events -->
+
+        <div class="summary-block">
+
+            <h3>
+                📅 Selected Events
+            </h3>
+
+            {% if summary.events %}
+
+                <div class="event-list">
+
+                    {% for event in summary.events %}
+
+                    <div class="event-card">
+
+                        <div class="event-name">
+                            {{ event.event_name }}
+                        </div>
+
+                        <div class="event-info">
+
+                            {% if event.event_date %}
+
+                            <span>
+                                📆
+                                {{ event.event_date.strftime('%d %B %Y') }}
+                            </span>
+
+                            {% endif %}
+
+
+                            {% if event.event_time %}
+
+                            <span>
+                                🕐
+                                {{ event.event_time }}
+                            </span>
+
+                            {% endif %}
+
+
+                            {% if event.venue %}
+
+                            <span>
+                                📍
+                                {{ event.venue }}
+                            </span>
+
+                            {% endif %}
+
+
+                            {% if event.category %}
+
+                            <span>
+                                🏷️
+                                {{ event.category }}
+                            </span>
+
+                            {% endif %}
+
+
+                            {% if event.duration %}
+
+                            <span>
+                                ⏱️
+                                {{ event.duration }}
+                            </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        {% if event.description %}
+
+                        <div class="event-description">
+                            {{ event.description }}
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="no-data">
+                    No events selected.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- Judges & Mentors -->
+
+        <div class="summary-block">
+
+            <h3>
+                👨‍⚖️ Judges & Mentors
+            </h3>
+
+
+            {% if summary.judges_mentors %}
+
+                {% for person in summary.judges_mentors %}
+
+                <div class="summary-row">
+
+                    <span>
+                        {{ person.type }}
+                    </span>
+
+                    <span>
+
+                        {{ person.name }}
+
+                        {% if person.role %}
+
+                            — {{ person.role }}
+
+                        {% endif %}
+
+                    </span>
+
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="summary-row">
+
+                    <span>
+                        Judges & Mentors
+                    </span>
+
+                    <span>
+                        No data available
+                    </span>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- FAQ -->
+
+        <div class="summary-block">
+
+            <h3>
+                ❓ Frequently Asked Questions
+            </h3>
+
+
+            {% if summary.faqs %}
+
+                <div class="faq-list">
+
+                    {% for faq in summary.faqs %}
+
+                    <div class="faq-item">
+
+                        <div class="faq-question">
+                            Q. {{ faq.question }}
+                        </div>
+
+                        <div class="faq-answer">
+                            {{ faq.answer }}
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="no-data">
+                    No FAQs available.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- FAQ Personal Message -->
+
+        <div class="summary-block">
+
+            <h3>
+                💬 Personal Question / Message
+            </h3>
+
+
+            {% if summary.faq_message %}
+
+                <div class="faq-item">
+
+                    <div class="faq-question">
+                        Your Message
+                    </div>
+
+                    <div class="faq-answer">
+                        {{ summary.faq_message.message }}
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                <div class="no-data">
+                    No personal message sent.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- Registration Status -->
+
+        <div class="summary-block">
+
+            <h3>
+                📌 Registration Status
+            </h3>
+
+            <div class="summary-row">
+
+                <span>
+                    Status
+                </span>
+
+                <span style="color:var(--accent);">
+                    {{ summary.status or 'Pending' }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Action Buttons -->
+
+        <div class="summary-actions">
+
+
+            <!-- Edit Registration -->
+
+            <a
+                href="{{ url_for('team_registration') }}"
+                class="summary-btn edit"
+            >
+                Edit Registration
+            </a>
+
+
+            <!-- Confirm Registration -->
+
+            {% if summary.status != 'Confirmed' %}
+
+            <form
+                method="POST"
+                action="{{ url_for('confirm_registration') }}"
+                style="flex:1;min-width:180px;"
+            >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <button
+                    type="submit"
+                    class="summary-btn confirm"
+                    style="width:100%;border:none;"
+                >
+                    Confirm Registration
+                </button>
+
+            </form>
+
+            {% else %}
+
+            <button
+                class="summary-btn confirm done"
+                disabled
+            >
+                ✓ Registration Confirmed
+            </button>
+
+            {% endif %}
+
+
+            <!-- My Certificate -->
+
+            <a
+                href="{{ url_for('certificates') }}"
+                class="summary-btn certificate"
+            >
+                🏆 My Certificate
+            </a>
+
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<footer>
+
+    © 2026 Community Hackathon for Social Innovation
+
+</footer>
+
+
+</body>
+</html>

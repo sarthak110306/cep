@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Community Hackathon - Home</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/home1.css') }}">
+
+   
+</head>
+
+<body>
+    {% include '_flash.html' %}
+
+    <!-- ================= HEADER ================= -->
+
+    <header>
+
+        <div class="eyebrow">
+            Community Hackathon 2026
+        </div>
+
+        <h1>
+            WELCOME TO HOME PAGE
+        </h1>
+
+        <p>
+            Build innovative solutions for real-world social challenges.
+        </p>
+
+        <!-- <a href="team-registration.html" class="btn">
+           HOME PAGE 
+        </a> -->
+
+    </header>
+
+
+    <!-- ================= NAVIGATION ================= -->
+
+    {% from '_nav.html' import site_nav %}
+    {{ site_nav('home') }}
+
+
+    <!-- ================= HOME CONTENT ================= -->
+
+    <main>
+
+        <section style="display:block;">
+
+            <h2>
+                Welcome to Community Hackathon
+            </h2>
+
+            <div class="card">
+
+                <p>
+                    Welcome to our Community Hackathon 2026.
+                    This platform brings together students,
+                    developers, designers and innovators to create
+                    technology-based solutions for real-world
+                    social problems.
+                </p>
+
+                <p>
+                    Form your team, choose a problem, build your
+                    solution and present your idea to our judges.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- QUICK LINKS -->
+
+        <!-- <section style="display:block;">
+
+            <h2>
+                Explore Hackathon
+            </h2>
+
+            <div class="prize-grid">
+
+                <div class="prize">
+
+                    <h3>About</h3>
+
+                    <p>
+                        Learn more about the hackathon.
+                    </p>
+
+                    <br>
+
+                    <a href="about.html" class="btn">
+                        View About
+                    </a>
+
+                </div>
+
+
+                <div class="prize">
+
+                    <h3>Schedule</h3>
+
+                    <p>
+                        Check the complete event schedule.
+                    </p>
+
+                    <br>
+
+                    <a href="schedule.html" class="btn">
+                        View Schedule
+                    </a>
+
+                </div>
+
+
+                <div class="prize">
+
+                    <h3>Rules</h3>
+
+                    <p>
+                        Read the hackathon rules.
+                    </p>
+
+                    <br>
+
+                    <a href="rules.html" class="btn">
+                        View Rules
+                    </a>
+
+                </div>
+
+
+                <div class="prize">
+
+                    <h3>Prizes</h3>
+
+                    <p>
+                        Check prizes and rewards.
+                    </p>
+
+                    <br>
+
+                    <a href="prizes.html" class="btn">
+                        View Prizes
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main> -->
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+        <p>
+            © 2026 Community Hackathon.
+            All Rights Reserved.
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

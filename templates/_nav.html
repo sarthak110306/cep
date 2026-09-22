@@ -1,0 +1,15 @@
+{% macro site_nav(active='') %}
+<nav>
+    <a href="{{ url_for('home') }}" {% if active == 'home' %}class="active"{% endif %}>Home</a>
+    <a href="{{ url_for('about') }}" {% if active == 'about' %}class="active"{% endif %}>About</a>
+    <a href="{{ url_for('problems') }}" {% if active == 'problems' %}class="active"{% endif %}>Problem Statements</a>
+    <a href="{{ url_for('team_registration') }}" {% if active == 'team' %}class="active"{% endif %}>Team Registration</a>
+    <a href="{{ url_for('judges_mentors') }}" {% if active == 'judges' %}class="active"{% endif %}>Judges & Mentors</a>
+    <a href="{{ url_for('events') }}" {% if active == 'events' %}class="active"{% endif %}>Event & Schedule</a>
+    <a href="{{ url_for('gallery') }}" {% if active == 'gallery' %}class="active"{% endif %}>Gallery</a>
+    <a href="{{ url_for('faq') }}" {% if active == 'faq' %}class="active"{% endif %}>FAQ</a>
+    <a href="{{ url_for('contact') }}" {% if active == 'contact' %}class="active"{% endif %}>Contact Us</a>
+    <a href="{{ url_for('registration_summary') }}" {% if active == 'summary' %}class="active"{% endif %}>Registration Summary</a>
+    <a href="{{ url_for('logout') }}" style="color:#ff8a8a;">Logout</a>
+</nav>
+{% endmacro %}
