@@ -64,6 +64,43 @@ if os.getenv("RENDER") or os.getenv("USE_PROXY_FIX", "false").strip().lower() in
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 
+@app.route("/healthz")
+@app.route("/ping")
+def healthz():
+    """Lightweight health check endpoint for monitoring and Render keep-alive."""
+    return jsonify({
+        "status": "healthy",
+        "service": "community-hackathon",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "database": "supabase-postgres" if Config.IS_POSTGRES else "mysql"
+    }), 200
+
+
+# In-process keep-alive pinger for Render free tier
+import threading
+import time as time_module
+import requests
+
+def _run_render_keep_alive():
+    url = Config.RENDER_EXTERNAL_URL
+    if not url:
+        return
+    ping_url = f"{url.rstrip('/')}/healthz"
+    interval = max(60, Config.KEEP_ALIVE_INTERVAL_MINUTES * 60)
+    app.logger.info("Render keep-alive started targeting: %s (interval: %ss)", ping_url, interval)
+    while True:
+        try:
+            time_module.sleep(interval)
+            resp = requests.get(ping_url, timeout=15)
+            app.logger.info("Render keep-alive ping %s: HTTP %s", ping_url, resp.status_code)
+        except Exception as err:
+            app.logger.warning("Render keep-alive ping failed: %s", err)
+
+if Config.RENDER_EXTERNAL_URL:
+    threading.Thread(target=_run_render_keep_alive, daemon=True, name="RenderKeepAlive").start()
+
+
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -548,10 +585,13 @@ def select_problem(problem_id):
             return jsonify({"success": False, "message": "Problem not found"}), 404
 
         cursor.execute(
+            "DELETE FROM user_problem_selections WHERE user_id = %s",
+            (session["user_id"],)
+        )
+        cursor.execute(
             """
             INSERT INTO user_problem_selections (user_id, problem_statement_id)
             VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE problem_statement_id = VALUES(problem_statement_id)
             """,
             (session["user_id"], problem_id),
         )

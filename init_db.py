@@ -1,14 +1,9 @@
 """
-Community Hackathon - Database Initialization Script.
-
-This script initializes the database tables and seed data using database/schema.sql.
-It works for both local MySQL and remote cloud MySQL databases (Render, TiDB, Aiven, etc.).
+Community Hackathon - Database Initialization Script for Supabase / PostgreSQL / MySQL.
 
 Usage:
     python init_db.py
 """
-import os
-import re
 import sys
 from pathlib import Path
 
@@ -25,7 +20,6 @@ def split_sql_statements(sql_content):
 
     for line in lines:
         stripped = line.strip()
-        # Skip pure comment lines
         if stripped.startswith("--") or stripped.startswith("#"):
             continue
 
@@ -33,9 +27,8 @@ def split_sql_statements(sql_content):
         i = 0
         while i < len(chars):
             ch = chars[i]
-            if ch in ("'", '"', "`"):
+            if ch in ("'", '"'):
                 if in_quote == ch:
-                    # Check if escaped
                     if i > 0 and chars[i - 1] == "\\":
                         pass
                     else:
@@ -61,20 +54,21 @@ def split_sql_statements(sql_content):
 
 
 def init_database():
-    schema_path = Path(__file__).resolve().parent / "database" / "schema.sql"
+    schema_filename = "schema_postgres.sql" if Config.IS_POSTGRES else "schema.sql"
+    schema_path = Path(__file__).resolve().parent / "database" / schema_filename
+
     if not schema_path.exists():
         print(f"Error: Schema file not found at {schema_path}")
         sys.exit(1)
 
-    print(f"Connecting to database '{Config.DB_NAME}' on {Config.DB_HOST}:{Config.DB_PORT}...")
+    print(f"Connecting to {'Supabase/PostgreSQL' if Config.IS_POSTGRES else 'MySQL'} at {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}...")
     try:
         conn = get_db_connection()
     except Exception as exc:
-        print(f"Failed to connect to MySQL database: {exc}")
-        print("\nPlease check your DB credentials in .env or Render environment variables.")
+        print(f"Failed to connect to database: {exc}")
         sys.exit(1)
 
-    print("Connected successfully. Parsing schema...")
+    print(f"Connected successfully. Loading {schema_filename}...")
     with open(schema_path, "r", encoding="utf-8") as f:
         sql_content = f.read()
 
@@ -88,25 +82,26 @@ def init_database():
             cleaned = stmt.strip()
             upper_prefix = cleaned[:30].upper()
 
-            # Skip CREATE DATABASE / USE statements if connecting to a cloud-managed DB
             if upper_prefix.startswith("CREATE DATABASE") or upper_prefix.startswith("USE "):
                 skipped_count += 1
                 continue
 
             try:
                 cursor.execute(cleaned)
+                conn.commit()
                 executed_count += 1
             except Exception as e:
-                # If insert duplicates (e.g. seed data already exists), log and continue
-                if "Duplicate entry" in str(e) or "already exists" in str(e):
+                err_str = str(e).lower()
+                if "already exists" in err_str or "duplicate key" in err_str or "unique constraint" in err_str:
                     skipped_count += 1
+                    conn.rollback()
                 else:
-                    print(f"Warning on statement: {e}\nQuery snippet: {cleaned[:80]}...")
+                    print(f"Warning: {e}\nQuery snippet: {cleaned[:80]}...")
+                    conn.rollback()
 
-        conn.commit()
         print(f"\nDatabase initialization complete!")
         print(f"Statements executed: {executed_count}, skipped: {skipped_count}")
-        print("All tables and initial problem statements are ready.")
+        print("All tables and initial problem statements, judges, events, and FAQs are ready.")
     except Exception as exc:
         conn.rollback()
         print(f"Error during schema initialization: {exc}")

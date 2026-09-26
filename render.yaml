@@ -6,6 +6,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     autoDeploy: true
+    healthCheckPath: /healthz
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
@@ -15,17 +16,25 @@ services:
         value: "true"
       - key: FLASK_DEBUG
         value: "false"
+      - key: SUPABASE_URL
+        value: "https://pfphsnbguxoybnmnogcx.supabase.co"
+      - key: SUPABASE_KEY
+        value: "sb_publishable_jY1aBwwwf6SkDKq-Jxet7A_YHm4-PV9"
+      - key: DATABASE_URL
+        value: "postgresql://postgres:sarthak%402026V@db.pfphsnbguxoybnmnogcx.supabase.co:5432/postgres"
+      - key: DB_ENGINE
+        value: "postgres"
       - key: DB_HOST
-        sync: false
+        value: "db.pfphsnbguxoybnmnogcx.supabase.co"
       - key: DB_PORT
-        value: "3306"
+        value: "5432"
       - key: DB_USER
-        sync: false
+        value: "postgres"
       - key: DB_PASSWORD
-        sync: false
+        value: "sarthak@2026V"
       - key: DB_NAME
-        sync: false
-      - key: DB_SSL_DISABLED
-        value: "false"
-      - key: DB_SSL_VERIFY_CERT
-        value: "false"
+        value: "postgres"
+      - key: DB_SSL_MODE
+        value: "require"
+      - key: KEEP_ALIVE_INTERVAL_MINUTES
+        value: "10"

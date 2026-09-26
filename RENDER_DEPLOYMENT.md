@@ -1,121 +1,89 @@
-# Community Hackathon - Render Deployment Guide
+# Community Hackathon - Render & Supabase Production Deployment Guide
 
-This guide walks you through deploying the **Community Hackathon Application** on [Render](https://render.com) with a cloud MySQL database.
-
----
-
-## Architecture Overview
-
-- **Web Service**: Render (Python 3.11+, Gunicorn WSGI, Flask)
-- **Database**: Remote Cloud MySQL (TiDB Cloud Serverless, Aiven, or Railway)
-- **Static & PDF Assets**: Handled in-process via ReportLab & Flask
+This guide walks you through deploying the **Community Hackathon Application** on [Render](https://render.com) using your **Supabase PostgreSQL** backend, complete with automated keep-alive configurations so the service never sleeps on the free plan.
 
 ---
 
-## Step 1: Set Up a Free Cloud MySQL Database
+## 1. Architecture Overview
 
-Render provides managed PostgreSQL natively, but this application uses MySQL. You can use any of these fast, free cloud MySQL providers:
-
-### Option A: TiDB Cloud Serverless (Recommended - Free Forever)
-1. Sign up at [tidbcloud.com](https://tidbcloud.com/).
-2. Create a free **Serverless Tier** cluster (takes 30 seconds).
-3. Under **Overview** -> **Connect**, select **General** connection details to copy:
-   - **Host**: e.g., `gateway01.us-east-1.prod.aws.tidbcloud.com`
-   - **Port**: `4000`
-   - **User**: e.g., `xxxxxx.root`
-   - **Password**: Your generated password
-   - **Database**: `test` (or create a database named `community_hackathon`)
-
-### Option B: Aiven for MySQL (Free Trial / Tier)
-1. Sign up at [aiven.io](https://aiven.io/).
-2. Create a MySQL service and copy the Host, Port, User, Password, and DB Name.
-
-### Option C: Railway MySQL
-1. Sign up at [railway.app](https://railway.app/).
-2. Click **New Project** -> **Provision MySQL**.
-3. Under the **Connect** tab, copy the individual credentials or the `MYSQL_URL`.
+- **Web Server**: Render Free Plan (Python 3.11+, Gunicorn WSGI, Flask)
+- **Database**: Supabase PostgreSQL (`db.pfphsnbguxoybnmnogcx.supabase.co:5432/postgres`)
+- **Backend APIs**: Supabase REST / Auth (`https://pfphsnbguxoybnmnogcx.supabase.co`)
+- **Anti-Sleep Keep-Alive**: Multi-layer pinger (GitHub Actions + in-app daemon + `keep_alive.py`)
 
 ---
 
-## Step 2: Initialize Database Tables & Problem Statements
+## 2. Supabase Database Status
 
-Before starting the web app, populate the database tables:
+All 16 tables and seed data have been initialized on your Supabase project:
+- `users`, `admins`, `problem_statements`, `user_problem_selections`
+- `teams`, `team_members`, `registrations`, `judges_mentors`
+- `events`, `faqs`, `contact_messages`, `user_judge_selections`
+- `user_event_selections`, `user_faq_selections`, `user_faq_messages`, `certificates`
 
-1. On your local machine, open your `.env` file (or set temporary environment variables) with the remote database credentials:
-   ```env
-   DB_HOST=your-cloud-host.com
-   DB_PORT=3306 (or 4000 for TiDB)
-   DB_USER=your-user
-   DB_PASSWORD=your-password
-   DB_NAME=community_hackathon
-   DB_SSL_DISABLED=false
-   DB_SSL_VERIFY_CERT=false
-   ```
-2. Run the initialization script:
-   ```bash
-   python init_db.py
-   ```
-   This automatically creates all tables from `database/schema.sql` and loads the initial problem statements.
-
-3. Create your secure admin account:
-   ```bash
-   python create_admin.py
-   ```
-   Follow the prompts to specify your admin name, email, and password.
-
-*(Alternatively, you can run these commands inside Render's web **Shell** tab after the service is created).*
+To create an admin account on the Supabase database:
+```bash
+python create_admin.py
+```
 
 ---
 
-## Step 3: Deploy to Render
+## 3. Deploy to Render
 
-### Method 1: Using the Render Blueprint (`render.yaml`) - Quickest
-1. Log in to [dashboard.render.com](https://dashboard.render.com).
+### Method 1: Deploy with Blueprint (`render.yaml`) - 1 Click
+1. Go to [Render Dashboard](https://dashboard.render.com).
 2. Click **New +** -> **Blueprint**.
-3. Connect your repository: `https://github.com/sarthak110306/cep`.
-4. Render will detect `render.yaml` automatically.
-5. Fill in the prompted database environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`).
-6. Click **Apply**. Render will automatically build and deploy the app!
+3. Select your repository: `https://github.com/sarthak110306/cep`.
+4. Render reads `render.yaml` and pre-populates all configurations and Supabase credentials automatically.
+5. Click **Apply**. Render will build and deploy the web service immediately!
 
 ---
 
 ### Method 2: Manual Web Service Setup
-1. On the Render Dashboard, click **New +** -> **Web Service**.
-2. Connect your GitHub repository: `sarthak110306/cep`.
+1. Click **New +** -> **Web Service**.
+2. Connect `sarthak110306/cep`.
 3. Configure settings:
-   - **Name**: `community-hackathon`
-   - **Region**: Choose closest to you (e.g., Oregon, Frankfurt, Singapore)
-   - **Branch**: `main`
-   - **Root Directory**: leave empty
    - **Runtime**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT`
-   - **Instance Type**: `Free`
-4. Expand **Advanced** -> **Add Environment Variable**:
-
-| Variable | Value | Notes |
-| :--- | :--- | :--- |
-| `SECRET_KEY` | *(Click "Generate" or paste random string)* | Required |
-| `SESSION_COOKIE_SECURE` | `true` | Required for HTTPS |
-| `FLASK_DEBUG` | `false` | Production mode |
-| `DB_HOST` | `your-db-host.com` | Remote DB host |
-| `DB_PORT` | `3306` (or `4000`) | Remote DB port |
-| `DB_USER` | `your-db-user` | Remote DB username |
-| `DB_PASSWORD` | `your-db-password` | Remote DB password |
-| `DB_NAME` | `community_hackathon` | Remote DB name |
-| `DB_SSL_DISABLED` | `false` | Enable TLS/SSL |
-| `DB_SSL_VERIFY_CERT` | `false` | Relax cloud CA verification |
-
-5. Click **Create Web Service**.
+   - **Health Check Path**: `/healthz`
+4. Add Environment Variables:
+   - `DATABASE_URL`: `postgresql://postgres:sarthak%402026V@db.pfphsnbguxoybnmnogcx.supabase.co:5432/postgres`
+   - `SUPABASE_URL`: `https://pfphsnbguxoybnmnogcx.supabase.co`
+   - `SUPABASE_KEY`: `sb_publishable_jY1aBwwwf6SkDKq-Jxet7A_YHm4-PV9`
+   - `SESSION_COOKIE_SECURE`: `true`
+   - `FLASK_DEBUG`: `false`
+   - `RENDER_EXTERNAL_URL`: `https://your-service-name.onrender.com`
 
 ---
 
-## Step 4: Verify Deployment
+## 4. Preventing Render Free Tier From Sleeping
 
-1. Once Render finishes building, you will see a green **Live** badge.
-2. Click on the URL provided by Render (e.g., `https://community-hackathon.onrender.com`).
-3. Verify:
-   - Landing page loads properly.
-   - User registration and login work.
-   - Admin login (`/admin/login`) functions with the admin user created in Step 2.
-   - PDF ticket generation and problem statement browsing work as expected.
+Render spins down free web services after 15 minutes of inactivity. We have provided three automatic solutions:
+
+### Solution 1: Automated GitHub Actions Pinger (Cloud-based, 24/7)
+The repository includes `.github/workflows/keep_alive.yml`.
+1. Once deployed, note your Render URL (e.g. `https://community-hackathon.onrender.com`).
+2. In your GitHub repository: go to **Settings** -> **Secrets and variables** -> **Actions**.
+3. Add a repository secret named `RENDER_APP_URL` with your Render URL.
+4. GitHub Actions will automatically send a GET request to `/healthz` every 12 minutes completely free, keeping Render awake 24/7!
+
+### Solution 2: In-App Self-Pinger Daemon
+In Render's dashboard under Environment Variables, set:
+```
+RENDER_EXTERNAL_URL=https://your-service-name.onrender.com
+KEEP_ALIVE_INTERVAL_MINUTES=10
+```
+The Flask application will automatically start a background thread that pings itself via Render's public router every 10 minutes.
+
+### Solution 3: Free Web Monitor (cron-job.org / UptimeRobot)
+1. Sign up for free at [cron-job.org](https://cron-job.org) or [uptimerobot.com](https://uptimerobot.com).
+2. Create a new monitor pointing to: `https://your-service-name.onrender.com/healthz`.
+3. Set the check interval to **10 minutes**.
+4. Save. This will ping your app around the clock with zero maintenance.
+
+### Solution 4: Standalone Python Script
+Run locally on your laptop or machine whenever you want:
+```bash
+python keep_alive.py https://your-service-name.onrender.com
+```
