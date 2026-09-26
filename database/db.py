@@ -50,11 +50,24 @@ if Config.IS_POSTGRES:
             return getattr(self._conn, name)
 
     def get_db_connection():
-        """Create and return a Supabase/PostgreSQL database connection."""
+        """Create and return a Supabase/PostgreSQL database connection (IPv4 forced)."""
+        import socket
+
+        host = Config.DB_HOST
+        port = Config.DB_PORT
+
+        # Resolve hostname to IPv4 explicitly — Render free tier does not support IPv6
+        try:
+            ipv4_info = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+            if ipv4_info:
+                host = ipv4_info[0][4][0]  # Use resolved IPv4 address directly
+        except Exception:
+            pass  # If resolution fails, fall back to hostname and let psycopg2 handle it
+
         try:
             conn = psycopg2.connect(
-                host=Config.DB_HOST,
-                port=Config.DB_PORT,
+                host=host,
+                port=port,
                 dbname=Config.DB_NAME,
                 user=Config.DB_USER,
                 password=Config.DB_PASSWORD,
@@ -66,6 +79,7 @@ if Config.IS_POSTGRES:
             raise RuntimeError(
                 f"PostgreSQL connection to Supabase failed ({Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}): {exc}"
             ) from exc
+
 
     def dict_cursor(connection):
         """Return a cursor that yields rows as dictionaries."""
