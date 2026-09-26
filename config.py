@@ -40,11 +40,12 @@ class Config:
 
     DB_ENGINE = os.getenv("DB_ENGINE", _engine).lower()
     IS_POSTGRES = DB_ENGINE in ("postgres", "postgresql") or ("postgres" in DATABASE_URL)
-    DB_HOST = _host
-    DB_PORT = _port
-    DB_USER = _user
-    DB_PASSWORD = _password
-    DB_NAME = _db
+    # Individual env vars take priority over DATABASE_URL parsed values
+    DB_HOST = os.getenv("DB_HOST") or _host
+    DB_PORT = int(os.getenv("DB_PORT") or _port)
+    DB_USER = os.getenv("DB_USER") or _user
+    DB_PASSWORD = os.getenv("DB_PASSWORD") or _password
+    DB_NAME = os.getenv("DB_NAME") or _db
     DB_SSL_MODE = os.getenv("DB_SSL_MODE", "require" if IS_POSTGRES else "prefer")
 
     # Mail configuration
