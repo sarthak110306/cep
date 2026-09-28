@@ -417,6 +417,7 @@ def login():
         user = cursor.fetchone()
         if user and check_password_hash(user["password_hash"], password):
             session.clear()
+            session.permanent = True
             session["user_id"] = user["id"]
             session["user_name"] = user["name"]
             flash("Login successful! Welcome back.", "success")
@@ -462,7 +463,6 @@ def signup():
     if password != confirm:
         flash("Passwords do not match.", "error")
         return redirect(url_for("index"))
-
     conn = get_db_connection()
     cursor = dict_cursor(conn)
     try:
@@ -476,13 +476,28 @@ def signup():
             (name, email, generate_password_hash(password)),
         )
         conn.commit()
-        flash(f"Welcome, {name}! Your account has been created. Please log in.", "success")
-        return redirect(url_for("index"))
+
+        # Auto-login after successful signup
+        cursor.execute(
+            "SELECT id, name FROM users WHERE email = %s",
+            (email,)
+        )
+        new_user = cursor.fetchone()
+
+        if new_user:
+            session.clear()
+            session.permanent = True
+            session["user_id"] = new_user["id"]
+            session["user_name"] = new_user["name"]
+        flash(f"Welcome, {name}! Your account has been created.", "success")
+        return redirect(url_for("home"))
+
     except Exception:
         conn.rollback()
         app.logger.exception("SIGNUP ERROR")
         flash("Unable to create your account right now. Please try again.", "error")
         return redirect(url_for("index"))
+
     finally:
         cursor.close()
         conn.close()
@@ -615,8 +630,11 @@ def select_problem(problem_id):
 def team_registration():
     conn = get_db_connection()
     cursor = dict_cursor(conn)
+
     try:
-        cursor.execute("SELECT * FROM problem_statements ORDER BY category, title")
+        cursor.execute(
+            "SELECT * FROM problem_statements ORDER BY category, title"
+        )
         all_problems = cursor.fetchall()
 
         cursor.execute(
@@ -624,18 +642,31 @@ def team_registration():
             (session["user_id"],),
         )
         selected = cursor.fetchone()
-        selected_problem_id = selected["problem_statement_id"] if selected else None
+        selected_problem_id = (
+            selected["problem_statement_id"] if selected else None
+        )
 
+        # -------------------------
+        # GET REQUEST
+        # -------------------------
         if request.method == "GET":
-            cursor.execute("SELECT * FROM teams WHERE user_id = %s", (session["user_id"],))
+            cursor.execute(
+                "SELECT * FROM teams WHERE user_id = %s",
+                (session["user_id"],)
+            )
             existing = cursor.fetchone()
+
             members = []
+
             if existing:
                 cursor.execute(
                     "SELECT member_name FROM team_members WHERE team_id = %s",
                     (existing["id"],),
                 )
-                members = [m["member_name"] for m in cursor.fetchall()]
+                members = [
+                    m["member_name"]
+                    for m in cursor.fetchall()
+                ]
 
             return render_template(
                 "team-registration.html",
@@ -645,6 +676,9 @@ def team_registration():
                 existing_members=members,
             )
 
+        # -------------------------
+        # GET FORM DATA
+        # -------------------------
         team_name = request.form.get("team_name", "").strip()
         college = request.form.get("college", "").strip()
         leader_name = request.form.get("leader_name", "").strip()
@@ -653,110 +687,415 @@ def team_registration():
         problem_id = request.form.get("problem_statement_id")
         member_names = request.form.getlist("members")
 
-        if not all([team_name, college, leader_name, phone, email, problem_id]):
-            flash("Please fill in all required fields.", "error")
-            return redirect(url_for("team_registration"))
-        if not validate_email(email):
-            flash("Please enter a valid email address.", "error")
-            return redirect(url_for("team_registration"))
-        if not validate_phone(phone):
-            flash("Please enter a valid 10-digit phone number.", "error")
-            return redirect(url_for("team_registration"))
-        if len(team_name) > 150 or len(college) > 200 or len(leader_name) > 100:
-            flash("One or more fields exceed the allowed length.", "error")
-            return redirect(url_for("team_registration"))
-        if not problem_id.isdigit():
-            flash("Please select a valid problem statement.", "error")
+        # -------------------------
+        # REQUIRED FIELD VALIDATION
+        # -------------------------
+        if not all([
+            team_name,
+            college,
+            leader_name,
+            phone,
+            email,
+            problem_id
+        ]):
+            flash(
+                "Please fill in all required fields.",
+                "error"
+            )
             return redirect(url_for("team_registration"))
 
-        # Issue #6 - server-side team size validation (2-4 members total,
-        # i.e. the leader plus 1-3 additional members). The existing UI
-        # already caps this at 3 additional members (maxMembers = 3); this
-        # mirrors that limit on the backend so it cannot be bypassed.
-        cleaned_members = [m.strip() for m in member_names if m.strip()]
-        cleaned_members = [m for m in cleaned_members if len(m) <= 100]
-        if len(cleaned_members) != len([m for m in member_names if m.strip()]):
-            flash("One or more member names exceed the allowed length.", "error")
+        # -------------------------
+        # EMAIL VALIDATION
+        # -------------------------
+        if not validate_email(email):
+            flash(
+                "Please enter a valid email address.",
+                "error"
+            )
             return redirect(url_for("team_registration"))
-        if len(cleaned_members) < 1 or len(cleaned_members) > 3:
-            flash("A team must have between 2 and 4 members in total (team leader + 1 to 3 additional members).", "error")
+
+        # -------------------------
+        # PHONE VALIDATION
+        # -------------------------
+        if not validate_phone(phone):
+            flash(
+                "Please enter a valid 10-digit phone number.",
+                "error"
+            )
             return redirect(url_for("team_registration"))
+
+        # -------------------------
+        # FIELD LENGTH VALIDATION
+        # -------------------------
+        if (
+            len(team_name) > 150
+            or len(college) > 200
+            or len(leader_name) > 100
+        ):
+            flash(
+                "One or more fields exceed the allowed length.",
+                "error"
+            )
+            return redirect(url_for("team_registration"))
+
+        # -------------------------
+        # PROBLEM ID VALIDATION
+        # -------------------------
+        if not problem_id.isdigit():
+            flash(
+                "Please select a valid problem statement.",
+                "error"
+            )
+            return redirect(url_for("team_registration"))
+
+        # -------------------------
+        # TEAM MEMBER VALIDATION
+        # -------------------------
+        cleaned_members = [
+            m.strip()
+            for m in member_names
+        ]
+
+        # Blank member names
+        if any(m == "" for m in cleaned_members):
+            flash(
+                "Please enter the name of every team member.",
+                "error"
+            )
+
+            existing_team_data = {
+                "team_name": team_name,
+                "college": college,
+                "team_leader": leader_name,
+                "phone": phone,
+                "email": email,
+                "problem_statement_id": int(problem_id),
+            }
+
+            return render_template(
+                "team-registration.html",
+                problems=all_problems,
+                selected_problem_id=int(problem_id),
+                existing_team=existing_team_data,
+                existing_members=member_names,
+            )
+
+        # Member name length
+        if any(len(m) > 100 for m in cleaned_members):
+            flash(
+                "One or more member names exceed the allowed length.",
+                "error"
+            )
+
+            existing_team_data = {
+                "team_name": team_name,
+                "college": college,
+                "team_leader": leader_name,
+                "phone": phone,
+                "email": email,
+                "problem_statement_id": int(problem_id),
+            }
+
+            return render_template(
+                "team-registration.html",
+                problems=all_problems,
+                selected_problem_id=int(problem_id),
+                existing_team=existing_team_data,
+                existing_members=member_names,
+            )
+
+        # At least 1 additional member
+        if len(cleaned_members) < 1:
+            flash(
+                "A team must have at least 1 additional member.",
+                "error"
+            )
+
+            existing_team_data = {
+                "team_name": team_name,
+                "college": college,
+                "team_leader": leader_name,
+                "phone": phone,
+                "email": email,
+                "problem_statement_id": int(problem_id),
+            }
+
+            return render_template(
+                "team-registration.html",
+                problems=all_problems,
+                selected_problem_id=int(problem_id),
+                existing_team=existing_team_data,
+                existing_members=member_names,
+            )
+
+        # Maximum 3 additional members
+        if len(cleaned_members) > 3:
+            flash(
+                "A team can have a maximum of 3 additional members.",
+                "error"
+            )
+
+            existing_team_data = {
+                "team_name": team_name,
+                "college": college,
+                "team_leader": leader_name,
+                "phone": phone,
+                "email": email,
+                "problem_statement_id": int(problem_id),
+            }
+
+            return render_template(
+                "team-registration.html",
+                problems=all_problems,
+                selected_problem_id=int(problem_id),
+                existing_team=existing_team_data,
+                existing_members=member_names,
+            )
+
         member_names = cleaned_members
 
-        try:
-            cursor.execute("SELECT id FROM teams WHERE user_id = %s", (session["user_id"],))
-            existing_team = cursor.fetchone()
+        # -------------------------
+        # DUPLICATE TEAM NAME CHECK
+        # -------------------------
+        cursor.execute(
+            """
+            SELECT id
+            FROM teams
+            WHERE team_name = %s
+            AND user_id != %s
+            """,
+            (
+                team_name,
+                session["user_id"]
+            )
+        )
 
-            if existing_team:
-                team_id = existing_team["id"]
-                cursor.execute(
-                    """
-                    UPDATE teams SET team_name=%s, team_leader=%s, college=%s,
-                    email=%s, phone=%s, problem_statement_id=%s WHERE id=%s
-                    """,
-                    (team_name, leader_name, college, email, phone, problem_id, team_id),
-                )
-                cursor.execute("DELETE FROM team_members WHERE team_id = %s", (team_id,))
-            else:
-                cursor.execute(
-                    "SELECT id FROM teams WHERE team_name = %s", (team_name,)
-                )
-                if cursor.fetchone():
-                    flash("This team name is already taken. Please choose another.", "error")
-                    return redirect(url_for("team_registration"))
+        if cursor.fetchone():
+            flash(
+                "This team name is already taken. Please choose another.",
+                "error"
+            )
 
-                cursor.execute(
-                    """
-                    INSERT INTO teams (user_id, team_name, team_leader, college, email, phone, problem_statement_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (session["user_id"], team_name, leader_name, college, email, phone, problem_id),
-                )
-                team_id = cursor.lastrowid
+            existing_team_data = {
+                "team_name": team_name,
+                "college": college,
+                "team_leader": leader_name,
+                "phone": phone,
+                "email": email,
+                "problem_statement_id": int(problem_id),
+            }
 
-            for name in member_names:
-                cursor.execute(
-                    "INSERT INTO team_members (team_id, member_name) VALUES (%s, %s)",
-                    (team_id, name),
+            return render_template(
+                "team-registration.html",
+                problems=all_problems,
+                selected_problem_id=int(problem_id),
+                existing_team=existing_team_data,
+                existing_members=member_names,
+            )
+
+        # -------------------------
+        # CHECK CURRENT USER TEAM
+        # -------------------------
+        cursor.execute(
+            "SELECT id FROM teams WHERE user_id = %s",
+            (session["user_id"],)
+        )
+        existing_team = cursor.fetchone()
+
+        # -------------------------
+        # UPDATE EXISTING TEAM
+        # -------------------------
+        if existing_team:
+            team_id = existing_team["id"]
+
+            cursor.execute(
+                """
+                UPDATE teams
+                SET team_name=%s,
+                    team_leader=%s,
+                    college=%s,
+                    email=%s,
+                    phone=%s,
+                    problem_statement_id=%s
+                WHERE id=%s
+                """,
+                (
+                    team_name,
+                    leader_name,
+                    college,
+                    email,
+                    phone,
+                    problem_id,
+                    team_id,
+                ),
+            )
+
+            cursor.execute(
+                "DELETE FROM team_members WHERE team_id = %s",
+                (team_id,)
+            )
+
+        # -------------------------
+        # CREATE NEW TEAM
+        # -------------------------
+        else:
+            cursor.execute(
+                "SELECT id FROM teams WHERE team_name = %s",
+                (team_name,)
+            )
+
+            if cursor.fetchone():
+                flash(
+                    "This team name is already taken. Please choose another.",
+                    "error"
+                )
+                return redirect(
+                    url_for("team_registration")
                 )
 
             cursor.execute(
-                "SELECT id FROM registrations WHERE user_id = %s", (session["user_id"],)
+                """
+                INSERT INTO teams
+                (
+                    user_id,
+                    team_name,
+                    team_leader,
+                    college,
+                    email,
+                    phone,
+                    problem_statement_id
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    session["user_id"],
+                    team_name,
+                    leader_name,
+                    college,
+                    email,
+                    phone,
+                    problem_id,
+                ),
             )
-            if not cursor.fetchone():
-                cursor.execute(
-                    "INSERT INTO registrations (user_id, team_id, status) VALUES (%s, %s, 'Pending')",
-                    (session["user_id"], team_id),
-                )
-            else:
-                cursor.execute(
-                    "UPDATE registrations SET team_id = %s, status = 'Pending' WHERE user_id = %s",
-                    (team_id, session["user_id"]),
-                )
 
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            app.logger.exception("TEAM REGISTRATION ERROR")
-            flash("We couldn't save your team registration. Please check your details and try again.", "error")
-            return redirect(url_for("team_registration"))
+            team_id = cursor.lastrowid
 
-        flash("Team registered successfully! Continue through Judges & Mentors, Event Schedule, Gallery, FAQ, and Contact Us to review your registration.", "success")
-        return redirect(url_for("judges_mentors"))
+        # -------------------------
+        # SAVE TEAM MEMBERS
+        # -------------------------
+        for name in member_names:
+            cursor.execute(
+                """
+                INSERT INTO team_members
+                (team_id, member_name)
+                VALUES (%s, %s)
+                """,
+                (team_id, name),
+            )
+
+        # -------------------------
+        # REGISTRATION RECORD
+        # -------------------------
+        cursor.execute(
+            "SELECT id FROM registrations WHERE user_id = %s",
+            (session["user_id"],)
+        )
+
+        if not cursor.fetchone():
+            cursor.execute(
+                """
+                INSERT INTO registrations
+                (user_id, team_id, status)
+                VALUES (%s, %s, 'Pending')
+                """,
+                (
+                    session["user_id"],
+                    team_id
+                ),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE registrations
+                SET team_id = %s,
+                    status = 'Pending'
+                WHERE user_id = %s
+                """,
+                (
+                    team_id,
+                    session["user_id"]
+                ),
+            )
+
+        # -------------------------
+        # SAVE ALL CHANGES
+        # -------------------------
+        conn.commit()
+
+        if existing_team:
+            flash(
+                "Team details updated successfully! Continue through Judges & Mentors, Event Schedule, Gallery, FAQ, and Contact Us to review your registration.",
+                "success"
+            )
+        else:
+            flash(
+                "Team registered successfully! Continue through Judges & Mentors, Event Schedule, Gallery, FAQ, and Contact Us to review your registration.",
+                "success"
+            )
+
+        return redirect(
+            url_for("judges_mentors")
+        )
+
+    except Exception:
+        conn.rollback()
+
+        app.logger.exception(
+            "TEAM REGISTRATION ERROR"
+        )
+
+        flash(
+            "We couldn't save your team registration. Please check your details and try again.",
+            "error"
+        )
+
+        return redirect(
+            url_for("team_registration")
+        )
+
     finally:
         cursor.close()
         conn.close()
-
-
 @app.route("/judges-mentors")
 @login_required
 def judges_mentors():
     conn = get_db_connection()
     cursor = dict_cursor(conn)
+
     try:
         cursor.execute("SELECT * FROM judges_mentors ORDER BY type, name")
         people = [person_to_frontend(r) for r in cursor.fetchall()]
-        return render_template("judges-mentors.html", people=people)
+
+        cursor.execute(
+            """
+            SELECT judge_mentor_id
+            FROM user_judge_selections
+            WHERE user_id = %s
+            """,
+            (session["user_id"],)
+        )
+
+        selected_judge_ids = [
+            row["judge_mentor_id"]
+            for row in cursor.fetchall()
+        ]
+
+        return render_template(
+            "judges-mentors.html",
+            people=people,
+            selected_judge_ids=selected_judge_ids
+        )
+
     finally:
         cursor.close()
         conn.close()
@@ -985,9 +1324,24 @@ def events():
         )
         events_list = [event_to_frontend(r) for r in cursor.fetchall()]
 
+        cursor.execute(
+            """
+            SELECT event_id
+            FROM user_event_selections
+            WHERE user_id = %s
+            """,
+            (session["user_id"],)
+        )
+
+        selected_event_ids = [
+            row["event_id"]
+            for row in cursor.fetchall()
+        ]
+
         return render_template(
             "event.html",
-            events=events_list
+            events=events_list,
+            selected_event_ids=selected_event_ids
         )
 
     finally:

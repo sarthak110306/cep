@@ -853,10 +853,10 @@
 
    
     <div id="event-data"
-        data-events='{{ events | tojson }}'
-        style="display:none;">
-    </div>
-
+    data-events='{{ events | tojson }}'
+    data-selected-events='{{ selected_event_ids | tojson }}'
+    style="display:none;">
+</div>
 
     <script>
 
@@ -905,8 +905,11 @@
         /*
             Stores the events selected by the user.
         */
-        const addedEvents = new Set();
-
+        const addedEvents = new Set(
+    JSON.parse(
+        document.getElementById("event-data").dataset.selectedEvents || "[]"
+    )
+);
 
         /* =========================================
            FORMAT TIME

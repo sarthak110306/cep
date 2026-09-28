@@ -902,6 +902,9 @@ footer{
 <script id="people-data" type="application/json">
     {{ people | tojson }}
 </script>
+<script id="selected-judge-data" type="application/json">
+    {{ selected_judge_ids | tojson }}
+</script>
 <script>
     const people = JSON.parse(document.getElementById('people-data').textContent);
 
@@ -917,7 +920,9 @@ let activeFilter = "All";
 let searchTerm = "";
 let judgesPage = 1;
 let mentorsPage = 1;
-const selectedIds = new Set();
+const selectedIds = new Set(
+    JSON.parse(document.getElementById("selected-judge-data").textContent)
+);
 
 function personCardHTML(p){
     const badgeClass = p.role === "Judge" ? "judge" : "mentor";
@@ -1139,6 +1144,12 @@ document.getElementById('clearSelectionBtn').addEventListener('click', () => {
 
 document.getElementById('confirmSelectionBtn').addEventListener('click', async () => {
     const selected_ids = Array.from(selectedIds);
+    const confirmButton = document.getElementById('confirmSelectionBtn');
+    const selectedBar = document.getElementById('selectedBar');
+
+    // Prevent double click
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Saving...";
 
     try {
         const response = await fetch("{{ url_for('save_judge_selection') }}", {
@@ -1163,12 +1174,21 @@ document.getElementById('confirmSelectionBtn').addEventListener('click', async (
                 `✅ Selection confirmed — ${names.length} pick${names.length > 1 ? 's' : ''}: ${names.join(', ')}`,
                 'success'
             );
+
+            // Hide the selection bar after successful confirmation
+            selectedBar.classList.remove('show');
+
         } else {
             showToast(`❌ ${result.message}`, 'warning');
         }
 
     } catch (error) {
         showToast('❌ Could not save selection. Please try again.', 'warning');
+
+    } finally {
+        // Restore button
+        confirmButton.disabled = false;
+        confirmButton.textContent = "Confirm Selection";
     }
 });
 // ===== Toast helper =====

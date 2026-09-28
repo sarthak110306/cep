@@ -495,7 +495,7 @@ footer{
             <h2>Team Details</h2>
             <p class="sub">All fields marked with * are required</p>
 
-            <form id="registerForm" method="POST" action="{{ url_for('team_registration') }}" novalidate>
+            <form id="registerForm" method="POST" action="{{ url_for('team_registration') }}" novalidate onsubmit="return validateRegistration(event)">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="field-group" id="teamNameGroup">
@@ -558,7 +558,9 @@ footer{
                     <p class="error-msg">Please select a problem statement.</p>
                 </div>
 
-                <button type="submit" class="submit-btn">Register Team</button>
+                <button type="submit" class="submit-btn">
+    {{ "Update Team" if existing_team else "Register Team" }}
+</button>
             </form>
         </div>
 
@@ -636,8 +638,9 @@ function validatePhone(phone){
 function validateEmail(email){
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
+function validateRegistration(e){
+    const submitButton = document.querySelector('#registerForm button[type="submit"]');
 
-document.getElementById('registerForm').addEventListener('submit', function(e){
     const teamName = document.getElementById('teamName').value.trim();
     const collegeName = document.getElementById('collegeName').value.trim();
     const leaderName = document.getElementById('leaderName').value.trim();
@@ -645,16 +648,87 @@ document.getElementById('registerForm').addEventListener('submit', function(e){
     const leaderEmail = document.getElementById('leaderEmail').value.trim();
     const challenge = document.getElementById('challengeSelect').value;
 
-    let valid = true;
-    if(teamName === ""){ showError('teamNameGroup', true); valid = false; } else { showError('teamNameGroup', false); }
-    if(collegeName === ""){ showError('collegeNameGroup', true); valid = false; } else { showError('collegeNameGroup', false); }
-    if(leaderName === ""){ showError('leaderNameGroup', true); valid = false; } else { showError('leaderNameGroup', false); }
-    if(!validatePhone(leaderPhone)){ showError('leaderPhoneGroup', true); valid = false; } else { showError('leaderPhoneGroup', false); }
-    if(!validateEmail(leaderEmail)){ showError('leaderEmailGroup', true); valid = false; } else { showError('leaderEmailGroup', false); }
-    if(challenge === ""){ showError('challengeGroup', true); valid = false; } else { showError('challengeGroup', false); }
-    if(!valid) e.preventDefault();
-});
+    const memberInputs = document.querySelectorAll('.member-input');
 
+    let valid = true;
+
+    if(teamName === ""){
+        showError('teamNameGroup', true);
+        valid = false;
+    } else {
+        showError('teamNameGroup', false);
+    }
+
+    if(collegeName === ""){
+        showError('collegeNameGroup', true);
+        valid = false;
+    } else {
+        showError('collegeNameGroup', false);
+    }
+
+    if(leaderName === ""){
+        showError('leaderNameGroup', true);
+        valid = false;
+    } else {
+        showError('leaderNameGroup', false);
+    }
+
+    if(!validatePhone(leaderPhone)){
+        showError('leaderPhoneGroup', true);
+        valid = false;
+    } else {
+        showError('leaderPhoneGroup', false);
+    }
+
+    if(!validateEmail(leaderEmail)){
+        showError('leaderEmailGroup', true);
+        valid = false;
+    } else {
+        showError('leaderEmailGroup', false);
+    }
+
+    if(challenge === ""){
+        showError('challengeGroup', true);
+        valid = false;
+    } else {
+        showError('challengeGroup', false);
+    }
+
+    // Team member validation
+    if(memberInputs.length === 0){
+
+        showWarning("Please add at least 1 team member.");
+        valid = false;
+
+    } else {
+
+        let hasEmptyMember = false;
+
+        memberInputs.forEach(function(input){
+            if(input.value.trim() === ""){
+                hasEmptyMember = true;
+            }
+        });
+
+        if(hasEmptyMember){
+            showWarning("Please enter the name of every team member.");
+            valid = false;
+        }
+    }
+
+    // Stop form submission if validation fails
+    if(!valid){
+    return false;
+}
+
+// Prevent accidental double submission
+if(submitButton){
+    submitButton.disabled = true;
+    submitButton.textContent = "Registering...";
+}
+
+return true;
+}
 function goNext(){
     window.location.href = "/judges-mentors";
 }

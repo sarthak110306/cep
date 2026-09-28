@@ -11,8 +11,10 @@
 
 /* Page Navigation */
 .page-nav {
-    display: flex;
-    justify-content: flex-end;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center;
+    width: 100%;
     max-width: 1100px;
     margin: 30px auto;
     padding: 0 24px;
@@ -45,6 +47,34 @@
     background: #2ee89b;
     transform: translateX(3px);
     box-shadow: 0 8px 20px rgba(32, 216, 144, 0.20);
+}
+/* Back Button */
+.step-btn.back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.step-btn.back svg {
+    width: 20px;
+    height: 20px;
+}
+
+.step-btn.back:hover {
+    background: rgba(61,220,151,0.10);
+    border-color: rgba(61,220,151,0.4);
+    transform: translateX(-3px);
 }
 :root{
     --bg:#07120f;
@@ -628,16 +658,24 @@ footer{
 </section>
 
 <div class="page-nav">
+
+    <a href="{{ url_for('events') }}" class="step-btn back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Back
+    </a>
+
     <a href="{{ url_for('faq') }}" class="step-btn next">
         Next
-
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
     </a>
-</div>
 
+</div>
 <footer>
     © 2026 Community Hackathon for Social Innovation
 </footer>
