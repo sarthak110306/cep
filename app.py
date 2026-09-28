@@ -420,6 +420,7 @@ def login():
             session.permanent = True
             session["user_id"] = user["id"]
             session["user_name"] = user["name"]
+            session["login_date"] = datetime.now().strftime("%d %B %Y")
             flash("Login successful! Welcome back.", "success")
             return redirect(url_for("home"))
         flash("Invalid email or password.", "error")
@@ -489,6 +490,7 @@ def signup():
             session.permanent = True
             session["user_id"] = new_user["id"]
             session["user_name"] = new_user["name"]
+            session["login_date"] = datetime.now().strftime("%d %B %Y")
         flash(f"Welcome, {name}! Your account has been created.", "success")
         return redirect(url_for("home"))
 
@@ -1550,221 +1552,891 @@ def download_certificate(certificate_id):
             else "Participant"
         )
 
+        # =========================================================
+        # A4 LANDSCAPE
+        # =========================================================
         buffer = BytesIO()
+
+        landscape_a4 = (A4[1], A4[0])
 
         pdf = canvas.Canvas(
             buffer,
-            pagesize=A4
+            pagesize=landscape_a4
         )
 
-        width, height = A4
+        width, height = landscape_a4
 
-        # Outer Border
-        pdf.setStrokeColor(colors.HexColor("#1f5c42"))
-        pdf.setLineWidth(5)
+        # =========================================================
+        # COLORS
+        # =========================================================
+        navy = colors.HexColor("#10245A")
+        blue = colors.HexColor("#1769E8")
+        bright_blue = colors.HexColor("#2878F0")
+        purple = colors.HexColor("#7357D9")
+        dark_text = colors.HexColor("#172B5F")
+        muted = colors.HexColor("#68789B")
+
+        very_light_blue = colors.HexColor("#F4F8FF")
+        light_blue = colors.HexColor("#EAF3FF")
+        light_purple = colors.HexColor("#F4F0FF")
+
+        border_blue = colors.HexColor("#AFC8F5")
+        white = colors.white
+
+        # =========================================================
+        # BACKGROUND
+        # =========================================================
+        pdf.setFillColor(white)
         pdf.rect(
-            15 * mm,
-            15 * mm,
-            width - 30 * mm,
-            height - 30 * mm
+            0,
+            0,
+            width,
+            height,
+            fill=1,
+            stroke=0
         )
 
-        # Inner Border
-        pdf.setStrokeColor(colors.HexColor("#d9a441"))
-        pdf.setLineWidth(2)
+        # =========================================================
+        # BACKGROUND DECORATIONS
+        # =========================================================
+
+        # Top-right soft blue area
+        pdf.setFillColor(colors.HexColor("#EEF5FF"))
+        pdf.roundRect(
+            width - 115 * mm,
+            height - 58 * mm,
+            105 * mm,
+            45 * mm,
+            8 * mm,
+            fill=1,
+            stroke=0
+        )
+
+        # Top-right blue diagonal strips
+        pdf.saveState()
+        pdf.setFillColor(colors.HexColor("#1769E8"))
+        pdf.translate(width - 10 * mm, height - 10 * mm)
+        pdf.rotate(45)
         pdf.rect(
-            21 * mm,
-            21 * mm,
-            width - 42 * mm,
-            height - 42 * mm
+            -10 * mm,
+            -5 * mm,
+            42 * mm,
+            8 * mm,
+            fill=1,
+            stroke=0
+        )
+        pdf.restoreState()
+
+        pdf.saveState()
+        pdf.setFillColor(colors.HexColor("#10245A"))
+        pdf.translate(width - 3 * mm, height - 3 * mm)
+        pdf.rotate(45)
+        pdf.rect(
+            -8 * mm,
+            -3 * mm,
+            38 * mm,
+            5 * mm,
+            fill=1,
+            stroke=0
+        )
+        pdf.restoreState()
+
+        # Bottom-left soft decoration
+        pdf.setFillColor(colors.HexColor("#F1F6FF"))
+        pdf.circle(
+            18 * mm,
+            16 * mm,
+            35 * mm,
+            fill=1,
+            stroke=0
         )
 
-        # Title
-        pdf.setFillColor(colors.HexColor("#1f5c42"))
-        pdf.setFont("Helvetica-Bold", 30)
-        pdf.drawCentredString(
-            width / 2,
-            height - 65 * mm,
-            "CERTIFICATE"
+        # Bottom-left diagonal blue strips
+        pdf.saveState()
+        pdf.setFillColor(colors.HexColor("#1769E8"))
+        pdf.translate(0, 0)
+        pdf.rotate(45)
+        pdf.rect(
+            -5 * mm,
+            0,
+            50 * mm,
+            7 * mm,
+            fill=1,
+            stroke=0
+        )
+        pdf.restoreState()
+
+        pdf.saveState()
+        pdf.setFillColor(colors.HexColor("#10245A"))
+        pdf.translate(0, 0)
+        pdf.rotate(45)
+        pdf.rect(
+            -8 * mm,
+            8 * mm,
+            45 * mm,
+            5 * mm,
+            fill=1,
+            stroke=0
+        )
+        pdf.restoreState()
+
+        # =========================================================
+        # PREMIUM BORDER
+        # =========================================================
+        pdf.setStrokeColor(border_blue)
+        pdf.setLineWidth(0.9)
+
+        pdf.rect(
+            8 * mm,
+            8 * mm,
+            width - 16 * mm,
+            height - 16 * mm,
+            fill=0,
+            stroke=1
         )
 
-        # Certificate Type
-        pdf.setFont("Helvetica-Bold", 18)
-        pdf.drawCentredString(
-            width / 2,
-            height - 78 * mm,
-            "OF PARTICIPATION"
-            if certificate["certificate_type"] == "Participation"
-            else "OF ACHIEVEMENT"
+        pdf.setStrokeColor(
+            colors.HexColor("#D7E5FA")
+        )
+        pdf.setLineWidth(0.5)
+
+        pdf.rect(
+            11 * mm,
+            11 * mm,
+            width - 22 * mm,
+            height - 22 * mm,
+            fill=0,
+            stroke=1
         )
 
-        # Main Text
-        pdf.setFillColor(colors.black)
-        pdf.setFont("Helvetica", 13)
-        pdf.drawCentredString(
-            width / 2,
-            height - 105 * mm,
-            "This certificate is proudly presented to"
+        # =========================================================
+        # TOP LEFT — HACKATHON BRANDING
+        # =========================================================
+        logo_path = os.path.join(
+            app.root_path,
+            "static",
+            "assets",
+            "college-logo.png"
         )
 
-        # Participant Name
-        pdf.setFillColor(colors.HexColor("#1f5c42"))
-        pdf.setFont("Helvetica-Bold", 25)
-        pdf.drawCentredString(
-            width / 2,
-            height - 120 * mm,
-            participant_name
+        # College logo
+        if os.path.exists(logo_path):
+            try:
+                from reportlab.lib.utils import ImageReader
+
+                logo = ImageReader(logo_path)
+
+                pdf.drawImage(
+
+
+                    logo,
+                    105 * mm,
+                    height - 38 * mm,
+                    width=22 * mm,
+                    height=22 * mm,
+                    preserveAspectRatio=True,
+                    anchor="c",
+                    mask="auto"
+                )
+
+            except Exception:
+                app.logger.exception(
+                    "CERTIFICATE LOGO ERROR"
+                )
+
+        # Hackathon branding text
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            8.5
         )
 
-        # Achievement Text
-        pdf.setFillColor(colors.black)
-        pdf.setFont("Helvetica", 12)
-
-        if certificate["certificate_type"] == "Winner":
-            pdf.drawCentredString(
-                width / 2,
-                height - 137 * mm,
-                "for achieving"
-            )
-
-            pdf.setFillColor(colors.HexColor("#d9a441"))
-            pdf.setFont("Helvetica-Bold", 20)
-
-            pdf.drawCentredString(
-                width / 2,
-                height - 148 * mm,
-                certificate["position"] or "Winner"
-            )
-        else:
-            pdf.drawCentredString(
-                width / 2,
-                height - 137 * mm,
-                "for successfully participating in the"
-            )
-
-        # Hackathon Name
-        pdf.setFillColor(colors.HexColor("#1f5c42"))
-        pdf.setFont("Helvetica-Bold", 17)
-
-        pdf.drawCentredString(
-            width / 2,
-            height - 164 * mm,
-            "Community Based Hackathon"
+        pdf.drawString(
+            39 * mm,
+            height - 18 * mm,
+            "Community-Based"
         )
 
-        pdf.setFillColor(colors.black)
-        pdf.setFont("Helvetica", 12)
+        pdf.setFont(
+            "Helvetica-Bold",
+            22
+        )
 
-        pdf.drawCentredString(
-            width / 2,
-            height - 174 * mm,
+        pdf.drawString(
+            39 * mm,
+            height - 27 * mm,
+            "Hackathon"
+        )
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            9
+        )
+
+        pdf.drawString(
+            39 * mm,
+            height - 34 * mm,
             "for Social Innovation"
         )
 
-        # Team
-        pdf.setFont("Helvetica-Bold", 11)
-        pdf.drawString(
-            45 * mm,
-            67 * mm,
-            "Team:"
-        )
-
-        pdf.setFont("Helvetica", 11)
-
-        team_name = certificate["team_name"] or "N/A"
-
-        if len(team_name) > 45:
-            team_name = team_name[:42] + "..."
-
-        pdf.drawString(
-            62 * mm,
-            67 * mm,
-            team_name
-        )
-
-        # Problem Statement
-        pdf.setFont("Helvetica-Bold", 11)
-
-        pdf.drawString(
-            45 * mm,
-            57 * mm,
-            "Challenge:"
-        )
-
-        pdf.setFont("Helvetica", 10)
-
-        problem = certificate["problem_statement"] or "N/A"
-
-        if len(problem) > 55:
-            problem = problem[:52] + "..."
-
-        pdf.drawString(
-            68 * mm,
-            57 * mm,
-            problem
-        )
-
-        # Certificate ID
-        pdf.setFont("Helvetica-Bold", 10)
-
-        pdf.drawString(
-            45 * mm,
-            45 * mm,
-            "Certificate ID:"
-        )
-
-        pdf.setFont("Helvetica", 10)
-
-        pdf.drawString(
-            72 * mm,
-            45 * mm,
-            certificate["certificate_id"]
-        )
-
-        # Issue Date
-        issued_date = certificate["issued_at"]
-
-        if issued_date:
-            issued_date = issued_date.strftime("%d %B %Y")
-        else:
-            issued_date = "N/A"
-
-        pdf.setFont("Helvetica-Bold", 10)
-
-        pdf.drawString(
-            45 * mm,
-            37 * mm,
-            "Issued Date:"
-        )
-
-        pdf.setFont("Helvetica", 10)
-
-        pdf.drawString(
-            72 * mm,
-            37 * mm,
-            issued_date
-        )
-
-        # Signature
-        pdf.setStrokeColor(colors.HexColor("#1f5c42"))
+        # Small divider
+        pdf.setStrokeColor(blue)
+        pdf.setLineWidth(1)
 
         pdf.line(
-            width - 75 * mm,
-            45 * mm,
-            width - 35 * mm,
-            45 * mm
+            97 * mm,
+            height - 14 * mm,
+            97 * mm,
+            height - 39 * mm
         )
 
-        pdf.setFillColor(colors.black)
-        pdf.setFont("Helvetica-Bold", 10)
+        # College name
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            13
+        )
+
+        pdf.drawString(
+            132 * mm,
+            height - 19 * mm,
+            "Annasaheb Vartak College"
+        )
+
+        pdf.setFont(
+            "Helvetica",
+            10
+        )
+
+        pdf.drawString(
+            132 * mm,
+            height - 27 * mm,
+            "Vasai West"
+        )
+
+        # =========================================================
+        # TOP RIGHT TAGLINE
+        # =========================================================
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            6.5
+        )
+
+        pdf.drawRightString(
+            width - 24 * mm,
+            height - 14 * mm,
+            "INNOVATE  /  BUILD  /  CREATE IMPACT"
+        )
+
+        # =========================================================
+        # MAIN TITLE
+        # =========================================================
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            31
+        )
 
         pdf.drawCentredString(
-            width - 55 * mm,
-            37 * mm,
-            "Hackathon Organizer"
+            width / 2,
+            height - 53 * mm,
+            "CERTIFICATE"
         )
 
-        # Finish PDF
+        # Subtitle
+        pdf.setFillColor(blue)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            11
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 62 * mm,
+            "O F   P A R T I C I P A T I O N"
+        )
+
+        # Subtitle lines
+        pdf.setStrokeColor(blue)
+        pdf.setLineWidth(0.8)
+
+        pdf.line(
+            61 * mm,
+            height - 59 * mm,
+            91 * mm,
+            height - 59 * mm
+        )
+
+        pdf.line(
+            width - 91 * mm,
+            height - 59 * mm,
+            width - 61 * mm,
+            height - 59 * mm
+        )
+
+        # =========================================================
+        # INTRO
+        # =========================================================
+        pdf.setFillColor(dark_text)
+
+        pdf.setFont(
+            "Helvetica",
+            10
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 74 * mm,
+            "This is to certify that"
+        )
+
+        # =========================================================
+        # PARTICIPANT NAME
+        # =========================================================
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            25
+        )
+
+        # Keep long names inside the certificate
+        name_font = 25
+
+        if len(participant_name) > 25:
+            name_font = 21
+        elif len(participant_name) > 20:
+            name_font = 23
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            name_font
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 88 * mm,
+            participant_name
+        )
+
+        # Name underline
+        pdf.setStrokeColor(blue)
+        pdf.setLineWidth(0.8)
+
+        pdf.line(
+            75 * mm,
+            height - 94 * mm,
+            width - 75 * mm,
+            height - 94 * mm
+        )
+
+        # Small diamond
+        pdf.setFillColor(blue)
+
+        diamond_x = width / 2
+        diamond_y = height - 94 * mm
+        diamond_size = 2.2 * mm
+
+        pdf.saveState()
+        pdf.translate(
+            diamond_x,
+            diamond_y
+        )
+        pdf.rotate(45)
+        pdf.rect(
+            -diamond_size / 2,
+            -diamond_size / 2,
+            diamond_size,
+            diamond_size,
+            fill=1,
+            stroke=0
+        )
+        pdf.restoreState()
+
+        # =========================================================
+        # DESCRIPTION
+        # =========================================================
+        pdf.setFillColor(dark_text)
+
+        pdf.setFont(
+            "Helvetica",
+            9.5
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 103 * mm,
+            "has successfully participated in the"
+        )
+
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            12
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 111 * mm,
+            "Community-Based Hackathon for Social Innovation"
+        )
+
+        pdf.setFillColor(dark_text)
+
+        pdf.setFont(
+            "Helvetica",
+            8.5
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 118 * mm,
+            "and contributed towards creating innovative solutions for a better tomorrow."
+        )
+
+        # =========================================================
+        # INFORMATION CARDS
+        # =========================================================
+        card_y = 34 * mm
+        card_h = 27 * mm
+        card_w = 63 * mm
+        gap = 7 * mm
+
+        total_cards_width = (
+            3 * card_w
+            + 2 * gap
+        )
+
+        start_x = (
+            width - total_cards_width
+        ) / 2
+
+        event_name = "Community Hackathon 2026"
+
+        cards = [
+            (
+                "Team",
+                certificate["team_name"] or "N/A",
+                blue
+            ),
+            (
+                "Problem Statement",
+                certificate["problem_statement"] or "N/A",
+                blue
+            ),
+            (
+                "Event",
+                event_name,
+                blue
+            )
+        ]
+
+        for i, (label, value, accent) in enumerate(cards):
+
+            x = start_x + i * (
+                card_w + gap
+            )
+
+            # Card background
+            pdf.setFillColor(
+                very_light_blue
+            )
+
+            pdf.roundRect(
+                x,
+                card_y,
+                card_w,
+                card_h,
+                4 * mm,
+                fill=1,
+                stroke=0
+            )
+
+            # Vertical separator
+            if i > 0:
+                pdf.setStrokeColor(
+                    colors.HexColor("#9EBBEF")
+                )
+
+                pdf.setLineWidth(0.7)
+
+                pdf.line(
+                    x - gap / 2,
+                    card_y + 5 * mm,
+                    x - gap / 2,
+                    card_y + card_h - 5 * mm
+                )
+
+            # Label
+            pdf.setFillColor(
+                accent
+            )
+
+            pdf.setFont(
+                "Helvetica-Bold",
+                6.8
+            )
+
+            pdf.drawString(
+                x + 6 * mm,
+                card_y + 18 * mm,
+                label
+            )
+
+            # Value
+            pdf.setFillColor(
+                navy
+            )
+
+            value_text = str(value)
+
+            value_font = 8.5
+
+            if len(value_text) > 27:
+                value_font = 7.5
+
+            if len(value_text) > 38:
+                value_text = (
+                    value_text[:35]
+                    + "..."
+                )
+
+            pdf.setFont(
+                "Helvetica-Bold",
+                value_font
+            )
+
+            pdf.drawString(
+                x + 6 * mm,
+                card_y + 9 * mm,
+                value_text
+            )
+
+        # =========================================================
+        # SIGNATURE SECTION
+        # =========================================================
+
+        # Left signature
+        left_sig_x1 = 43 * mm
+        left_sig_x2 = 93 * mm
+        left_sig_center = (
+            left_sig_x1 + left_sig_x2
+        ) / 2
+
+        pdf.setStrokeColor(
+            colors.HexColor("#5577B9")
+        )
+        pdf.setLineWidth(0.7)
+
+        pdf.line(
+            left_sig_x1,
+            23 * mm,
+            left_sig_x2,
+            23 * mm
+        )
+
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.5
+        )
+
+        pdf.drawCentredString(
+            left_sig_center,
+            17 * mm,
+            "Dr. Meenal Deshpande"
+        )
+
+        pdf.setFillColor(muted)
+
+        pdf.setFont(
+            "Helvetica",
+            6.5
+        )
+
+        pdf.drawCentredString(
+            left_sig_center,
+            13 * mm,
+            "Event Coordinator"
+        )
+
+        # Signature handwriting style
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Times-Italic",
+            14
+        )
+
+        pdf.drawCentredString(
+            left_sig_center,
+            25 * mm,
+            "Meenal"
+        )
+
+        # Right signature
+        right_sig_x1 = 108 * mm
+        right_sig_x2 = 158 * mm
+        right_sig_center = (
+            right_sig_x1 + right_sig_x2
+        ) / 2
+
+        pdf.setStrokeColor(
+            colors.HexColor("#5577B9")
+        )
+
+        pdf.line(
+            right_sig_x1,
+            23 * mm,
+            right_sig_x2,
+            23 * mm
+        )
+
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.5
+        )
+
+        pdf.drawCentredString(
+            right_sig_center,
+            17 * mm,
+            "Prof. Rohan Kulkarni"
+        )
+
+        pdf.setFillColor(muted)
+
+        pdf.setFont(
+            "Helvetica",
+            6.5
+        )
+
+        pdf.drawCentredString(
+            right_sig_center,
+            13 * mm,
+            "Head of Department"
+        )
+
+        pdf.setFillColor(navy)
+
+        pdf.setFont(
+            "Times-Italic",
+            14
+        )
+
+        pdf.drawCentredString(
+            right_sig_center,
+            25 * mm,
+            "Rohan"
+        )
+
+        # =========================================================
+        # QR CODE + CERTIFICATE ID
+        # =========================================================
+        try:
+            from reportlab.graphics.barcode.qr import (
+                QrCodeWidget
+            )
+            from reportlab.graphics.shapes import Drawing
+            from reportlab.graphics import renderPDF
+
+            verification_url = (
+                request.url_root.rstrip("/")
+                + url_for(
+                    "download_certificate",
+                    certificate_id=certificate[
+                        "certificate_id"
+                    ]
+                )
+            )
+
+            qr = QrCodeWidget(
+                verification_url
+            )
+
+            qr_size = 21 * mm
+
+            drawing = Drawing(
+                qr_size,
+                qr_size
+            )
+
+            drawing.add(qr)
+
+            qr_x = 194 * mm
+            qr_y = 16 * mm
+
+            renderPDF.draw(
+                drawing,
+                pdf,
+                qr_x,
+                qr_y
+            )
+
+            pdf.setFillColor(
+                navy
+            )
+
+            pdf.setFont(
+                "Helvetica-Bold",
+                7
+            )
+
+            pdf.drawString(
+                218 * mm,
+                27 * mm,
+                "Certificate ID"
+            )
+
+            pdf.setFont(
+                "Helvetica-Bold",
+                8
+            )
+
+            pdf.drawString(
+                218 * mm,
+                21 * mm,
+                certificate["certificate_id"]
+            )
+
+            pdf.setFillColor(
+                muted
+            )
+
+            pdf.setFont(
+                "Helvetica",
+                6.2
+            )
+
+            pdf.drawString(
+                218 * mm,
+                15 * mm,
+                "Scan to verify"
+            )
+
+            pdf.drawString(
+                218 * mm,
+                11 * mm,
+                "or visit the verification page"
+            )
+
+        except Exception:
+            app.logger.exception(
+                "CERTIFICATE QR ERROR"
+            )
+
+        # =========================================================
+        # DATE OF ISSUE
+        # =========================================================
+        issue_date = (
+            session.get("login_date")
+            or (
+                certificate["issued_at"].strftime(
+                    "%d %B %Y"
+                )
+                if certificate["issued_at"]
+                else "N/A"
+            )
+        )
+
+        pdf.setFillColor(
+            navy
+        )
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            6.5
+        )
+
+        pdf.drawString(
+            71 * mm,
+            22 * mm,
+            "Date of Issue"
+        )
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7.5
+        )
+
+        pdf.drawString(
+            71 * mm,
+            16 * mm,
+            issue_date
+        )
+
+        # =========================================================
+        # ORGANIZED BY
+        # =========================================================
+        pdf.setFillColor(
+            navy
+        )
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            6.5
+        )
+
+        pdf.drawString(
+            127 * mm,
+            22 * mm,
+            "Organized by"
+        )
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            7
+        )
+
+        pdf.drawString(
+            127 * mm,
+            16 * mm,
+            "Annasaheb Vartak College, Vasai West"
+        )
+
+        # =========================================================
+        # BOTTOM RIGHT TAGLINE
+        # =========================================================
+        pdf.setFillColor(
+            navy
+        )
+
+        pdf.setFont(
+            "Times-Italic",
+            9
+        )
+
+        pdf.drawString(
+            218 * mm,
+            16 * mm,
+            "Ideas today. Impact tomorrow."
+        )
+
+        pdf.setStrokeColor(
+            colors.HexColor("#8BA9DB")
+        )
+
+        pdf.setLineWidth(0.7)
+
+        pdf.line(
+            268 * mm,
+            17 * mm,
+            285 * mm,
+            17 * mm
+        )
+
+        # =========================================================
+        # FINISH PDF
+        # =========================================================
         pdf.showPage()
         pdf.save()
 
@@ -1780,7 +2452,6 @@ def download_certificate(certificate_id):
     finally:
         cursor.close()
         conn.close()
-
 @app.route("/admin/login", methods=["GET", "POST"])
 @limiter.limit("10 per minute", methods=["POST"])
 def admin_login():
