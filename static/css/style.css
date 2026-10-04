@@ -295,3 +295,14 @@ footer {
     font-size: 14px;
     margin-bottom: 24px;
 }
+
+/* Forgot Password link - same highlight style as Sign Up */
+#loginForgotLink {
+    color: var(--accent-soft) !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+#loginForgotLink:hover {
+    color: #ffc27a !important;
+}

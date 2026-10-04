@@ -271,21 +271,47 @@ def get_user_registration_summary(user_id):
     try:
         cursor.execute(
             """
-            SELECT u.name AS user_name, u.email AS user_email,
-                   t.team_name, t.team_leader, t.college,
-                   t.email AS team_email, t.phone,
-                   ps.title AS problem_title,
-                   ps.category, ps.difficulty,
-                   r.registration_id, r.status,
-                   (SELECT COUNT(*) FROM team_members tm
-                    WHERE tm.team_id = t.id) + 1 AS member_count
+            SELECT
+                u.name AS user_name,
+                u.email AS user_email,
+                t.team_name,
+                t.team_leader,
+                t.college,
+                t.email AS team_email,
+                t.phone,
+
+                ps.title AS problem_title,
+                ps.category,
+                ps.difficulty,
+
+                r.registration_id,
+                r.status,
+
+                (
+                    SELECT COUNT(*)
+                    FROM team_members tm
+                    WHERE tm.team_id = t.id
+                ) + 1 AS member_count
+
             FROM users u
-            LEFT JOIN teams t ON t.user_id = u.id
+
+            LEFT JOIN teams t
+                ON t.user_id = u.id
+
+            LEFT JOIN user_problem_selections ups
+                ON ups.user_id = u.id
+
             LEFT JOIN problem_statements ps
-                ON ps.id = t.problem_statement_id
+                ON ps.id = ups.problem_statement_id
+
             LEFT JOIN registrations r
                 ON r.user_id = u.id
+
             WHERE u.id = %s
+
+            ORDER BY ups.id DESC
+
+            LIMIT 1
             """,
             (user_id,),
         )
@@ -298,7 +324,11 @@ def get_user_registration_summary(user_id):
                 SELECT member_name
                 FROM team_members
                 WHERE team_id = (
-                    SELECT id FROM teams WHERE user_id = %s
+                    SELECT id
+                    FROM teams
+                    WHERE user_id = %s
+                    ORDER BY id DESC
+                    LIMIT 1
                 )
                 """,
                 (user_id,),
@@ -313,12 +343,23 @@ def get_user_registration_summary(user_id):
         # Event & Schedule
         cursor.execute(
             """
-            SELECT e.id, e.event_name, e.event_date, e.event_time,
-                   e.venue, e.description, e.category, e.duration
+            SELECT
+                e.id,
+                e.event_name,
+                e.event_date,
+                e.event_time,
+                e.venue,
+                e.description,
+                e.category,
+                e.duration
+
             FROM events e
+
             JOIN user_event_selections ues
                 ON ues.event_id = e.id
+
             WHERE ues.user_id = %s
+
             ORDER BY e.event_date, e.event_time
             """,
             (user_id,),
@@ -329,12 +370,24 @@ def get_user_registration_summary(user_id):
         # Judges & Mentors
         cursor.execute(
             """
-            SELECT jm.id, jm.name, jm.role, jm.organization, jm.expertise,
-                   jm.experience, jm.bio, jm.image, jm.type
+            SELECT
+                jm.id,
+                jm.name,
+                jm.role,
+                jm.organization,
+                jm.expertise,
+                jm.experience,
+                jm.bio,
+                jm.image,
+                jm.type
+
             FROM judges_mentors jm
+
             JOIN user_judge_selections ujs
                 ON ujs.judge_mentor_id = jm.id
+
             WHERE ujs.user_id = %s
+
             ORDER BY jm.type, jm.name
             """,
             (user_id,),
@@ -345,11 +398,19 @@ def get_user_registration_summary(user_id):
         # FAQs - only selected FAQs
         cursor.execute(
             """
-            SELECT f.id, f.category, f.question, f.answer
+            SELECT
+                f.id,
+                f.category,
+                f.question,
+                f.answer
+
             FROM faqs f
+
             JOIN user_faq_selections ufs
                 ON ufs.faq_id = f.id
+
             WHERE ufs.user_id = %s
+
             ORDER BY f.id
             """,
             (user_id,),
@@ -357,13 +418,21 @@ def get_user_registration_summary(user_id):
 
         summary["faqs"] = cursor.fetchall()
 
-                # FAQ Personal Message
+        # FAQ Personal Message
         cursor.execute(
             """
-            SELECT name, email, message, created_at
+            SELECT
+                name,
+                email,
+                message,
+                created_at
+
             FROM user_faq_messages
+
             WHERE user_id = %s
+
             ORDER BY created_at DESC
+
             LIMIT 1
             """,
             (user_id,),
@@ -373,7 +442,9 @@ def get_user_registration_summary(user_id):
 
         # Keep first event for existing Event Details section
         summary["main_event"] = (
-            summary["events"][0] if summary["events"] else None
+            summary["events"][0]
+            if summary["events"]
+            else None
         )
 
         return summary
@@ -391,6 +462,78 @@ def index():
         return redirect(url_for("home"))
     return render_template("login.html")
 
+
+# ---------------------------------------------------------------------------
+# Simple Forgot Password
+# ---------------------------------------------------------------------------
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
+def forgot_password():
+
+    if request.method == "GET":
+        return render_template("forgot-password.html")
+
+    email = request.form.get("email", "").strip()
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not validate_email(email):
+        flash("Please enter a valid email address.", "error")
+        return redirect(url_for("forgot_password"))
+
+    if len(new_password) < 5:
+        flash("Password must be at least 5 characters.", "error")
+        return redirect(url_for("forgot_password"))
+
+    if len(new_password) > 200:
+        flash("Password is too long.", "error")
+        return redirect(url_for("forgot_password"))
+
+    if new_password != confirm_password:
+        flash("Passwords do not match.", "error")
+        return redirect(url_for("forgot_password"))
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+        cursor.execute(
+            "SELECT id FROM users WHERE email = %s LIMIT 1",
+            (email,)
+        )
+        user = cursor.fetchone()
+
+        if not user:
+            flash("No account found with this email address.", "error")
+            return redirect(url_for("forgot_password"))
+
+        cursor.execute(
+            """
+            UPDATE users
+            SET password_hash = %s
+            WHERE id = %s
+            """,
+            (
+                generate_password_hash(new_password),
+                user["id"]
+            )
+        )
+
+        conn.commit()
+
+        flash("Password reset successfully. You can now login.", "success")
+        return redirect(url_for("index"))
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("FORGOT PASSWORD ERROR")
+        flash("Unable to reset password right now. Please try again.", "error")
+        return redirect(url_for("forgot_password"))
+
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("10 per minute", methods=["POST"])
@@ -648,23 +791,36 @@ def team_registration():
             selected["problem_statement_id"] if selected else None
         )
 
-        # -------------------------
+                # -------------------------
         # GET REQUEST
         # -------------------------
         if request.method == "GET":
+
             cursor.execute(
-                "SELECT * FROM teams WHERE user_id = %s",
+                """
+                SELECT *
+                FROM teams
+                WHERE user_id = %s
+                ORDER BY id DESC
+                LIMIT 1
+                """,
                 (session["user_id"],)
             )
+
             existing = cursor.fetchone()
 
             members = []
 
             if existing:
                 cursor.execute(
-                    "SELECT member_name FROM team_members WHERE team_id = %s",
-                    (existing["id"],),
+                    """
+                    SELECT member_name
+                    FROM team_members
+                    WHERE team_id = %s
+                    """,
+                    (existing["id"],)
                 )
+
                 members = [
                     m["member_name"]
                     for m in cursor.fetchall()
@@ -895,15 +1051,21 @@ def team_registration():
                 existing_members=member_names,
             )
 
-        # -------------------------
+                # -------------------------
         # CHECK CURRENT USER TEAM
         # -------------------------
         cursor.execute(
-            "SELECT id FROM teams WHERE user_id = %s",
+            """
+            SELECT id
+            FROM teams
+            WHERE user_id = %s
+            ORDER BY id DESC
+            LIMIT 1
+            """,
             (session["user_id"],)
         )
-        existing_team = cursor.fetchone()
 
+        existing_team = cursor.fetchone()
         # -------------------------
         # UPDATE EXISTING TEAM
         # -------------------------
@@ -1487,21 +1649,48 @@ def certificate_design_preview():
 @app.route("/certificates")
 @login_required
 def certificates():
+
     conn = get_db_connection()
     cursor = dict_cursor(conn)
 
     try:
+
         cursor.execute(
             """
-            SELECT certificate_id,
-                   certificate_type,
-                   position,
-                   team_name,
-                   problem_statement,
-                   issued_at
-            FROM certificates
-            WHERE user_id = %s
-            ORDER BY issued_at DESC
+            SELECT
+                c.certificate_id,
+                c.certificate_type,
+                c.position,
+                c.team_name,
+
+                COALESCE(
+                    latest_team.problem_title,
+                    c.problem_statement
+                ) AS problem_statement,
+
+                c.issued_at
+
+            FROM certificates c
+
+            LEFT JOIN (
+                SELECT
+                    t.user_id,
+                    t.team_name,
+                    ps.title AS problem_title
+                FROM teams t
+                LEFT JOIN problem_statements ps
+                    ON ps.id = t.problem_statement_id
+                WHERE t.id = (
+                    SELECT MAX(t2.id)
+                    FROM teams t2
+                    WHERE t2.user_id = t.user_id
+                )
+            ) AS latest_team
+                ON latest_team.user_id = c.user_id
+
+            WHERE c.user_id = %s
+            ORDER BY c.issued_at DESC
+        LIMIT 1
             """,
             (session["user_id"],)
         )
@@ -1513,10 +1702,27 @@ def certificates():
             certificates=certificate_list
         )
 
+    except Exception:
+
+        conn.rollback()
+
+        app.logger.exception(
+            "CERTIFICATES PAGE ERROR"
+        )
+
+        flash(
+            "Unable to load certificates right now.",
+            "error"
+        )
+
+        return redirect(
+            url_for("home")
+        )
+
     finally:
+
         cursor.close()
         conn.close()
-
 
 @app.route("/download-certificate/<certificate_id>")
 @login_required
@@ -1592,10 +1798,12 @@ def download_certificate(certificate_id):
             team_name = team_data["team_name"].strip()
 
 
+         # =========================================================
+         # 5. PROBLEM STATEMENT
         # =========================================================
-        # 5. PROBLEM STATEMENT
-        # =========================================================
-        problem_statement = certificate.get("problem_statement") or "N/A"
+        # Always use the user's CURRENTLY selected problem statement
+        # from the latest team record.
+        problem_statement = "N/A"
 
         if team_data and team_data.get("problem_title"):
             problem_statement = team_data["problem_title"].strip()
@@ -2205,6 +2413,600 @@ def download_certificate(certificate_id):
         cursor.close()
         conn.close()
 
+# =========================
+# Admin Authentication
+# =========================
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+
+    if request.method == "GET":
+        if session.get("admin_id"):
+            return redirect(url_for("admin_dashboard"))
+
+        return render_template("admin-login.html")
+
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+
+    if not email or not password or len(email) > 150 or len(password) > 200:
+        flash("Invalid admin credentials.", "error")
+        return redirect(url_for("admin_login"))
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+        cursor.execute(
+            "SELECT * FROM admins WHERE email = %s",
+            (email,)
+        )
+
+        admin = cursor.fetchone()
+
+        if admin and check_password_hash(
+            admin["password_hash"],
+            password
+        ):
+            session.clear()
+
+            session["admin_id"] = admin["id"]
+            session["admin_name"] = admin["name"]
+
+            flash("Admin login successful.", "success")
+
+            return redirect(url_for("admin_dashboard"))
+
+        flash("Invalid admin credentials.", "error")
+        return redirect(url_for("admin_login"))
+
+    except Exception:
+        conn.rollback()
+
+        app.logger.exception("ADMIN LOGIN ERROR")
+
+        flash(
+            "Unable to log in right now. Please try again.",
+            "error"
+        )
+
+        return redirect(url_for("admin_login"))
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/admin/signup", methods=["GET", "POST"])
+def admin_signup():
+
+    if request.method == "GET":
+
+        if session.get("admin_id"):
+            return redirect(url_for("admin_dashboard"))
+
+        return render_template("admin-signup.html")
+
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not name or not email or not password:
+        flash("Please fill all required fields.", "error")
+        return redirect(url_for("admin_signup"))
+
+    if len(name) > 100 or len(email) > 150:
+        flash("Name or email is too long.", "error")
+        return redirect(url_for("admin_signup"))
+
+    if password != confirm_password:
+        flash("Passwords do not match.", "error")
+        return redirect(url_for("admin_signup"))
+
+    if len(password) < 6 or len(password) > 200:
+        flash(
+            "Password must be between 6 and 200 characters.",
+            "error"
+        )
+        return redirect(url_for("admin_signup"))
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+
+        cursor.execute(
+            "SELECT id FROM admins WHERE email = %s",
+            (email,)
+        )
+
+        existing_admin = cursor.fetchone()
+
+        if existing_admin:
+            flash(
+                "An admin with this email already exists.",
+                "error"
+            )
+            return redirect(url_for("admin_signup"))
+
+        password_hash = generate_password_hash(password)
+
+        cursor.execute(
+            """
+            INSERT INTO admins
+                (name, email, password_hash)
+            VALUES
+                (%s, %s, %s)
+            """,
+            (
+                name,
+                email,
+                password_hash
+            )
+        )
+
+        conn.commit()
+
+        flash(
+            "Admin account created successfully. Please login.",
+            "success"
+        )
+
+        return redirect(url_for("admin_login"))
+
+    except Exception:
+
+        conn.rollback()
+
+        app.logger.exception("ADMIN SIGNUP ERROR")
+
+        flash(
+            "Error creating admin account. Please try again.",
+            "error"
+        )
+
+        return redirect(url_for("admin_signup"))
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/admin/logout")
+def admin_logout():
+
+    session.clear()
+
+    flash(
+        "Admin logged out.",
+        "success"
+    )
+
+    return redirect(url_for("admin_login"))
+
+
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    # Safe query helpers
+    def fetch_one_safe(query, params=None, default=None):
+        try:
+            cursor.execute(query, params or ())
+            return cursor.fetchone()
+        except Exception:
+            conn.rollback()
+            app.logger.exception("ADMIN DASHBOARD QUERY ERROR")
+            return default
+
+    def fetch_all_safe(query, params=None, default=None):
+        try:
+            cursor.execute(query, params or ())
+            return cursor.fetchall()
+        except Exception:
+            conn.rollback()
+            app.logger.exception("ADMIN DASHBOARD QUERY ERROR")
+            return default if default is not None else []
+
+    try:
+
+        # =========================
+        # DASHBOARD STATISTICS
+        # =========================
+
+        stats = {
+            "total_users": 0,
+            "total_teams": 0,
+            "total_registrations": 0,
+            "total_problems": 0,
+            "total_messages": 0,
+            "total_judges": 0,
+            "total_mentors": 0,
+            "unread_messages": 0
+        }
+
+        for table, key in [
+            ("users", "total_users"),
+            ("teams", "total_teams"),
+            ("registrations", "total_registrations"),
+            ("problem_statements", "total_problems"),
+            ("contact_messages", "total_messages"),
+        ]:
+
+            row = fetch_one_safe(
+                f"SELECT COUNT(*) AS count FROM {table}",
+                default=None
+            )
+
+            if row:
+                stats[key] = row["count"] or 0
+
+
+        # =========================
+        # JUDGES COUNT
+        # =========================
+
+        row = fetch_one_safe(
+            """
+            SELECT COUNT(*) AS count
+            FROM judges_mentors
+            WHERE type = 'Judge'
+            """,
+            default=None
+        )
+
+        if row:
+            stats["total_judges"] = row["count"] or 0
+
+
+        # =========================
+        # MENTORS COUNT
+        # =========================
+
+        row = fetch_one_safe(
+            """
+            SELECT COUNT(*) AS count
+            FROM judges_mentors
+            WHERE type = 'Mentor'
+            """,
+            default=None
+        )
+
+        if row:
+            stats["total_mentors"] = row["count"] or 0
+
+
+        # =========================
+        # UNREAD MESSAGES
+        # =========================
+
+        row = fetch_one_safe(
+            """
+            SELECT COUNT(*) AS count
+            FROM contact_messages
+            WHERE is_read = 0
+            """,
+            default=None
+        )
+
+        if row:
+            stats["unread_messages"] = row["count"] or 0
+
+
+        # =========================
+        # USERS
+        # =========================
+
+        users = fetch_all_safe(
+            """
+            SELECT
+                id,
+                name,
+                email,
+                created_at
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT 100
+            """
+        )
+
+
+        # =========================
+        # TEAMS
+        # =========================
+
+        teams = fetch_all_safe(
+            """
+            SELECT
+                t.*,
+                ps.title AS problem_title,
+                r.status,
+                r.registration_id,
+                (
+                    SELECT COUNT(*)
+                    FROM team_members tm
+                    WHERE tm.team_id = t.id
+                ) AS extra_members
+            FROM teams t
+            LEFT JOIN problem_statements ps
+                ON ps.id = t.problem_statement_id
+            LEFT JOIN registrations r
+                ON r.team_id = t.id
+            ORDER BY t.id DESC
+            """
+        )
+
+
+        # =========================
+        # PROBLEM STATEMENTS
+        # =========================
+
+        problems = fetch_all_safe(
+            """
+            SELECT *
+            FROM problem_statements
+            ORDER BY id
+            """
+        )
+
+
+        # =========================
+        # JUDGES & MENTORS
+        # =========================
+
+        judges_mentors_list = fetch_all_safe(
+            """
+            SELECT *
+            FROM judges_mentors
+            ORDER BY
+                CASE
+                    WHEN type = 'Judge' THEN 1
+                    WHEN type = 'Mentor' THEN 2
+                    ELSE 3
+                END,
+                name
+            """
+        )
+
+
+        # =========================
+        # EVENTS
+        # =========================
+
+        events = fetch_all_safe(
+            """
+            SELECT *
+            FROM events
+            ORDER BY event_date ASC, event_time ASC
+            """
+        )
+
+
+        # =========================
+        # FAQs
+        # =========================
+
+        faqs = fetch_all_safe(
+            """
+            SELECT *
+            FROM faqs
+            ORDER BY id DESC
+            """
+        )
+
+
+        # =========================
+        # CONTACT MESSAGES
+        # =========================
+
+        messages = fetch_all_safe(
+            """
+            SELECT *
+            FROM contact_messages
+            ORDER BY created_at DESC
+            """
+        )
+
+
+        # =========================
+        # CERTIFICATES
+        # =========================
+
+        certificates = fetch_all_safe(
+            """
+            SELECT
+                c.id,
+                c.certificate_id,
+                c.certificate_type,
+                c.position,
+                c.team_name,
+                c.problem_statement,
+                c.issued_at,
+                u.name AS user_name,
+                u.email AS user_email
+            FROM certificates c
+            JOIN users u
+                ON u.id = c.user_id
+            ORDER BY c.issued_at DESC
+            """,
+            default=[]
+        )
+
+
+        # =========================
+        # RENDER DASHBOARD
+        # =========================
+
+        return render_template(
+            "admin-dashboard.html",
+            stats=stats,
+            users=users,
+            teams=teams,
+            problems=problems,
+            judges_mentors=judges_mentors_list,
+            events=events,
+            faqs=faqs,
+            messages=messages,
+            certificates=certificates,
+            admin_name=session.get("admin_name")
+        )
+
+
+    except Exception:
+
+        conn.rollback()
+
+        app.logger.exception(
+            "ADMIN DASHBOARD ERROR"
+        )
+
+        flash(
+            "Unable to load admin dashboard.",
+            "error"
+        )
+
+        return redirect(
+            url_for("admin_login")
+        )
+
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+@app.route("/admin/problems/<int:pid>/delete", methods=["POST"])
+@admin_required
+def admin_delete_problem(pid):
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+        cursor.execute(
+            """
+            DELETE FROM problem_statements
+            WHERE id = %s
+            """,
+            (pid,)
+        )
+
+        conn.commit()
+
+        flash("Problem statement deleted successfully.", "success")
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("ADMIN DELETE PROBLEM ERROR")
+        flash("Unable to delete problem statement.", "error")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/problems/add", methods=["POST"])
+@admin_required
+def admin_add_problem():
+
+    title = request.form.get("title", "").strip()
+    category = request.form.get("category", "").strip()
+    difficulty = request.form.get("difficulty", "").strip()
+    description = request.form.get("description", "").strip()
+
+    if not title:
+        flash("Problem statement title is required.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    if len(title) > 200:
+        flash("Problem statement title is too long.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO problem_statements
+                (title, category, difficulty, description)
+            VALUES
+                (%s, %s, %s, %s)
+            """,
+            (
+                title,
+                category,
+                difficulty,
+                description
+            )
+        )
+
+        conn.commit()
+
+        flash("Problem statement added successfully.", "success")
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("ADMIN ADD PROBLEM ERROR")
+        flash("Unable to add problem statement.", "error")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("admin_dashboard"))
+
+# =========================
+# Admin Judge / Mentor
+# =========================
+
+@app.route("/admin/judges-mentors/add", methods=["POST"])
+@admin_required
+def admin_add_judge_mentor():
+
+    name = request.form.get("name", "").strip()
+    role = request.form.get("role", "").strip()
+    expertise = request.form.get("expertise", "").strip()
+    bio = request.form.get("bio", "").strip()
+
+    if not name or not role:
+        flash("Name and role are required.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO judges_mentors
+                (name, type, expertise, bio)
+            VALUES
+                (%s, %s, %s, %s)
+            """,
+            (name, role, expertise, bio)
+        )
+
+        conn.commit()
+
+        flash("Judge / Mentor added successfully.", "success")
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("ADMIN ADD JUDGE MENTOR ERROR")
+        flash("Unable to add judge / mentor.", "error")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for("admin_dashboard"))
+
 @app.route("/admin/events/add", methods=["POST"])
 @admin_required
 def admin_add_event():
@@ -2292,6 +3094,37 @@ def admin_edit_event(eid):
     finally:
         cursor.close()
         conn.close()
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_user(user_id):
+
+    conn = get_db_connection()
+    cursor = dict_cursor(conn)
+
+    try:
+        cursor.execute(
+            """
+            DELETE FROM users
+            WHERE id = %s
+            """,
+            (user_id,)
+        )
+
+        conn.commit()
+
+        flash("User deleted successfully.", "success")
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("ADMIN DELETE USER ERROR")
+        flash("Unable to delete user.", "error")
+
+    finally:
+        cursor.close()
+        conn.close()
+
     return redirect(url_for("admin_dashboard"))
 
 
@@ -2437,6 +3270,1091 @@ def admin_delete_message(mid):
     return redirect(url_for("admin_dashboard"))
 
 
+
+# ============================================================
+# ADMIN MISSING ROUTES - COMPATIBILITY FIX
+# ============================================================
+
+# ------------------------------------------------------------
+# DELETE USER
+# ------------------------------------------------------------
+
+if "admin_delete_user" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_delete_user(user_id):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+            cursor.execute(
+                "DELETE FROM users WHERE id = %s",
+                (user_id,)
+            )
+
+            conn.commit()
+
+            flash(
+                "User deleted successfully.",
+                "success"
+            )
+
+        except Exception:
+            conn.rollback()
+            app.logger.exception(
+                "ADMIN DELETE USER ERROR"
+            )
+
+            flash(
+                "Unable to delete user.",
+                "error"
+            )
+
+        finally:
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/users/<int:user_id>/delete",
+        endpoint="admin_delete_user",
+        view_func=_compat_admin_delete_user,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# ADD PROBLEM
+# ------------------------------------------------------------
+
+if "admin_add_problem" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_add_problem():
+
+        title = request.form.get(
+            "title",
+            ""
+        ).strip()
+
+        category = request.form.get(
+            "category",
+            ""
+        ).strip()
+
+        difficulty = request.form.get(
+            "difficulty",
+            ""
+        ).strip()
+
+        technologies = request.form.get(
+            "technologies",
+            ""
+        ).strip()
+
+        description = request.form.get(
+            "description",
+            ""
+        ).strip()
+
+        social_impact = request.form.get(
+            "social_impact",
+            ""
+        ).strip()
+
+        if not title or not category or not description:
+            flash(
+                "Title, category and description are required.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                INSERT INTO problem_statements
+                (
+                    title,
+                    description,
+                    category,
+                    difficulty,
+                    technologies,
+                    social_impact
+                )
+                VALUES
+                (%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    title,
+                    description,
+                    category,
+                    difficulty,
+                    technologies,
+                    social_impact
+                )
+            )
+
+            conn.commit()
+
+            flash(
+                "Problem statement added.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN ADD PROBLEM ERROR"
+            )
+
+            flash(
+                "Unable to add problem statement.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/problems/add",
+        endpoint="admin_add_problem",
+        view_func=_compat_admin_add_problem,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# DELETE PROBLEM
+# ------------------------------------------------------------
+
+if "admin_delete_problem" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_delete_problem(pid):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                DELETE FROM problem_statements
+                WHERE id = %s
+                """,
+                (pid,)
+            )
+
+            conn.commit()
+
+            flash(
+                "Problem statement deleted.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN DELETE PROBLEM ERROR"
+            )
+
+            flash(
+                "Unable to delete problem statement.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/problems/<int:pid>/delete",
+        endpoint="admin_delete_problem",
+        view_func=_compat_admin_delete_problem,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# DELETE JUDGE / MENTOR
+# ------------------------------------------------------------
+
+if "admin_delete_judge_mentor" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_delete_judge_mentor(jid):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                DELETE FROM judges_mentors
+                WHERE id = %s
+                """,
+                (jid,)
+            )
+
+            conn.commit()
+
+            flash(
+                "Judge / Mentor deleted.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN DELETE JUDGE MENTOR ERROR"
+            )
+
+            flash(
+                "Unable to delete judge / mentor.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/judges-mentors/<int:jid>/delete",
+        endpoint="admin_delete_judge_mentor",
+        view_func=_compat_admin_delete_judge_mentor,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# EDIT EVENT
+# ------------------------------------------------------------
+
+if "admin_edit_event" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_edit_event(eid):
+
+        event_name = request.form.get(
+            "event_name",
+            ""
+        ).strip()
+
+        event_date = request.form.get(
+            "event_date",
+            ""
+        ).strip()
+
+        event_time = request.form.get(
+            "event_time",
+            ""
+        ).strip()
+
+        venue = request.form.get(
+            "venue",
+            ""
+        ).strip()
+
+        category = request.form.get(
+            "category",
+            ""
+        ).strip()
+
+        duration = request.form.get(
+            "duration",
+            ""
+        ).strip()
+
+        description = request.form.get(
+            "description",
+            ""
+        ).strip()
+
+        if not event_name or not event_date:
+            flash(
+                "Event name and date are required.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                UPDATE events
+                SET
+                    event_name = %s,
+                    event_date = %s,
+                    event_time = %s,
+                    venue = %s,
+                    category = %s,
+                    duration = %s,
+                    description = %s
+                WHERE id = %s
+                """,
+                (
+                    event_name,
+                    event_date,
+                    event_time,
+                    venue,
+                    category,
+                    duration,
+                    description,
+                    eid
+                )
+            )
+
+            conn.commit()
+
+            flash(
+                "Event updated successfully.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN EDIT EVENT ERROR"
+            )
+
+            flash(
+                "Unable to update event.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/events/<int:eid>/edit",
+        endpoint="admin_edit_event",
+        view_func=_compat_admin_edit_event,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# DELETE EVENT
+# ------------------------------------------------------------
+
+if "admin_delete_event" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_delete_event(eid):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                DELETE FROM events
+                WHERE id = %s
+                """,
+                (eid,)
+            )
+
+            conn.commit()
+
+            flash(
+                "Event deleted.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN DELETE EVENT ERROR"
+            )
+
+            flash(
+                "Unable to delete event.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/events/<int:eid>/delete",
+        endpoint="admin_delete_event",
+        view_func=_compat_admin_delete_event,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# ADD FAQ
+# ------------------------------------------------------------
+
+if "admin_add_faq" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_add_faq():
+
+        category = request.form.get(
+            "category",
+            "General"
+        ).strip()
+
+        question = request.form.get(
+            "question",
+            ""
+        ).strip()
+
+        answer = request.form.get(
+            "answer",
+            ""
+        ).strip()
+
+        if not question or not answer:
+
+            flash(
+                "Question and answer are required.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                INSERT INTO faqs
+                (
+                    category,
+                    question,
+                    answer
+                )
+                VALUES
+                (%s,%s,%s)
+                """,
+                (
+                    category,
+                    question,
+                    answer
+                )
+            )
+
+            conn.commit()
+
+            flash(
+                "FAQ added successfully.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN ADD FAQ ERROR"
+            )
+
+            flash(
+                "Unable to add FAQ.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/faqs/add",
+        endpoint="admin_add_faq",
+        view_func=_compat_admin_add_faq,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# EDIT FAQ
+# ------------------------------------------------------------
+
+if "admin_edit_faq" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_edit_faq(fid):
+
+        category = request.form.get(
+            "category",
+            "General"
+        ).strip()
+
+        question = request.form.get(
+            "question",
+            ""
+        ).strip()
+
+        answer = request.form.get(
+            "answer",
+            ""
+        ).strip()
+
+        if not question or not answer:
+
+            flash(
+                "Question and answer are required.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                UPDATE faqs
+                SET
+                    category = %s,
+                    question = %s,
+                    answer = %s
+                WHERE id = %s
+                """,
+                (
+                    category,
+                    question,
+                    answer,
+                    fid
+                )
+            )
+
+            conn.commit()
+
+            flash(
+                "FAQ updated successfully.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN EDIT FAQ ERROR"
+            )
+
+            flash(
+                "Unable to update FAQ.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/faqs/<int:fid>/edit",
+        endpoint="admin_edit_faq",
+        view_func=_compat_admin_edit_faq,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# DELETE FAQ
+# ------------------------------------------------------------
+
+if "admin_delete_faq" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_delete_faq(fid):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                DELETE FROM faqs
+                WHERE id = %s
+                """,
+                (fid,)
+            )
+
+            conn.commit()
+
+            flash(
+                "FAQ deleted.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN DELETE FAQ ERROR"
+            )
+
+            flash(
+                "Unable to delete FAQ.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/faqs/<int:fid>/delete",
+        endpoint="admin_delete_faq",
+        view_func=_compat_admin_delete_faq,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# MARK MESSAGE AS READ
+# ------------------------------------------------------------
+
+if "admin_mark_message_read" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_mark_message_read(mid):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                UPDATE contact_messages
+                SET is_read = 1
+                WHERE id = %s
+                """,
+                (mid,)
+            )
+
+            conn.commit()
+
+            flash(
+                "Message marked as read.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN MARK MESSAGE READ ERROR"
+            )
+
+            flash(
+                "Unable to update message.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/messages/<int:mid>/read",
+        endpoint="admin_mark_message_read",
+        view_func=_compat_admin_mark_message_read,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# DELETE MESSAGE
+# ------------------------------------------------------------
+
+if "admin_delete_message" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_delete_message(mid):
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            cursor.execute(
+                """
+                DELETE FROM contact_messages
+                WHERE id = %s
+                """,
+                (mid,)
+            )
+
+            conn.commit()
+
+            flash(
+                "Message deleted.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN DELETE MESSAGE ERROR"
+            )
+
+            flash(
+                "Unable to delete message.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/messages/<int:mid>/delete",
+        endpoint="admin_delete_message",
+        view_func=_compat_admin_delete_message,
+        methods=["POST"]
+    )
+
+
+# ------------------------------------------------------------
+# ISSUE CERTIFICATE
+# ------------------------------------------------------------
+
+if "admin_issue_certificate" not in app.view_functions:
+
+    @admin_required
+    def _compat_admin_issue_certificate():
+
+        user_id = request.form.get(
+            "user_id",
+            ""
+        ).strip()
+
+        certificate_type = request.form.get(
+            "certificate_type",
+            "Participation"
+        ).strip()
+
+        position = request.form.get(
+            "position",
+            ""
+        ).strip()
+
+        if not user_id:
+
+            flash(
+                "Please select a user.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        if certificate_type not in [
+            "Participation",
+            "Winner"
+        ]:
+
+            flash(
+                "Invalid certificate type.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        if certificate_type == "Winner" and not position:
+
+            flash(
+                "Please enter the winner position.",
+                "error"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        conn = get_db_connection()
+        cursor = dict_cursor(conn)
+
+        try:
+
+            # ------------------------------------------------
+            # CHECK USER
+            # ------------------------------------------------
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    name,
+                    email
+                FROM users
+                WHERE id = %s
+                LIMIT 1
+                """,
+                (user_id,)
+            )
+
+            user = cursor.fetchone()
+
+            if not user:
+
+                flash(
+                    "User not found.",
+                    "error"
+                )
+
+                return redirect(
+                    url_for("admin_dashboard")
+                )
+
+            # ------------------------------------------------
+            # GET TEAM + PROBLEM
+            # ------------------------------------------------
+
+            cursor.execute(
+                """
+                SELECT
+                    t.team_name,
+                    ps.title AS problem_title
+                FROM teams t
+                LEFT JOIN problem_statements ps
+                    ON ps.id = t.problem_statement_id
+                WHERE t.user_id = %s
+                ORDER BY t.id DESC
+                LIMIT 1
+                """,
+                (user_id,)
+            )
+
+            team = cursor.fetchone()
+
+            team_name = (
+                team["team_name"]
+                if team and team.get("team_name")
+                else "N/A"
+            )
+
+            problem_statement = (
+                team["problem_title"]
+                if team and team.get("problem_title")
+                else "N/A"
+            )
+
+            # ------------------------------------------------
+            # GENERATE UNIQUE CERTIFICATE ID
+            # ------------------------------------------------
+
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM certificates
+                """
+            )
+
+            result = cursor.fetchone()
+
+            total = (
+                result["total"] or 0
+            ) + 1
+
+            certificate_id = (
+                f"CERT-HACK2026-{total:05d}"
+            )
+
+            # Make absolutely sure ID is unique
+            while True:
+
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM certificates
+                    WHERE certificate_id = %s
+                    LIMIT 1
+                    """,
+                    (certificate_id,)
+                )
+
+                existing = cursor.fetchone()
+
+                if not existing:
+                    break
+
+                total += 1
+
+                certificate_id = (
+                    f"CERT-HACK2026-{total:05d}"
+                )
+
+            # ------------------------------------------------
+            # INSERT CERTIFICATE
+            # ------------------------------------------------
+
+            cursor.execute(
+                """
+                INSERT INTO certificates
+                (
+                    user_id,
+                    certificate_id,
+                    certificate_type,
+                    position,
+                    team_name,
+                    problem_statement
+                )
+                VALUES
+                (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    user_id,
+                    certificate_id,
+                    certificate_type,
+                    position
+                    if certificate_type == "Winner"
+                    else None,
+                    team_name,
+                    problem_statement
+                )
+            )
+
+            conn.commit()
+
+            flash(
+                f"Certificate {certificate_id} issued successfully to {user['name']}.",
+                "success"
+            )
+
+        except Exception:
+
+            conn.rollback()
+
+            app.logger.exception(
+                "ADMIN ISSUE CERTIFICATE ERROR"
+            )
+
+            flash(
+                "Unable to issue certificate.",
+                "error"
+            )
+
+        finally:
+
+            cursor.close()
+            conn.close()
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    app.add_url_rule(
+        "/admin/issue-certificate",
+        endpoint="admin_issue_certificate",
+        view_func=_compat_admin_issue_certificate,
+        methods=["POST"]
+    )
+# ============================================================
+# END ADMIN MISSING ROUTES FIX
+# ============================================================
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").strip().lower() in ("1", "true", "yes")

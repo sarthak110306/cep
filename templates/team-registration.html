@@ -475,6 +475,59 @@ footer{
     .form-card{ padding:28px 22px; }
     .row2{ grid-template-columns:1fr; }
 }
+/* ===== Selected Problem Card ===== */
+
+.selected-problem-card{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:16px 18px;
+    border-radius:12px;
+    border:1px solid rgba(61,220,151,0.35);
+    background:rgba(61,220,151,0.07);
+}
+
+.selected-problem-check{
+    width:36px;
+    height:36px;
+    min-width:36px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(61,220,151,0.15);
+    border:1px solid rgba(61,220,151,0.35);
+    color:var(--accent);
+    font-size:18px;
+    font-weight:700;
+}
+
+.selected-problem-content{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.selected-problem-content strong{
+    color:var(--text);
+    font-size:14.5px;
+    font-weight:600;
+}
+
+.selected-problem-content span{
+    color:var(--text-dim);
+    font-size:12.5px;
+}
+
+.selected-problem-card.no-problem{
+    border-color:rgba(240,96,96,0.35);
+    background:rgba(240,96,96,0.06);
+}
+
+.selected-problem-card.no-problem .selected-problem-content strong{
+    color:#ff6b6b;
+}
 </style>
 </head>
 <body>
@@ -546,18 +599,48 @@ footer{
                 </div>
 
                 <div class="field-group" id="challengeGroup">
-                    <label>Selected Problem Statement *</label>
-                    <select name="problem_statement_id" id="challengeSelect" required>
-                        <option value="">-- Choose a problem statement --</option>
-                        {% for p in problems %}
-                        <option value="{{ p.id }}" {% if selected_problem_id == p.id or (existing_team and existing_team.problem_statement_id == p.id) %}selected{% endif %}>
-                            [{{ p.category }}] {{ p.title }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="error-msg">Please select a problem statement.</p>
+    <label>Selected Problem Statement *</label>
+
+    {% set current_problem_id = selected_problem_id or (existing_team.problem_statement_id if existing_team else none) %}
+
+    {% if current_problem_id %}
+        {% for p in problems %}
+            {% if p.id == current_problem_id %}
+                <div class="selected-problem-card">
+                    <div class="selected-problem-check">✓</div>
+
+                    <div class="selected-problem-content">
+                        <strong>{{ p.title }}</strong>
+                        <span>{{ p.category }}</span>
+                    </div>
                 </div>
 
+                <input
+                    type="hidden"
+                    name="problem_statement_id"
+                    id="challengeSelect"
+                    value="{{ p.id }}"
+                >
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="selected-problem-card no-problem">
+            <div class="selected-problem-content">
+                <strong>No problem statement selected</strong>
+                <span>Please go back and select a problem statement.</span>
+            </div>
+        </div>
+
+        <input
+            type="hidden"
+            name="problem_statement_id"
+            id="challengeSelect"
+            value=""
+        >
+    {% endif %}
+
+    <p class="error-msg">Please select a problem statement.</p>
+</div>
                 <button type="submit" class="submit-btn">
     {{ "Update Team" if existing_team else "Register Team" }}
 </button>
@@ -639,6 +722,7 @@ function validateEmail(email){
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 function validateRegistration(e){
+
     const submitButton = document.querySelector('#registerForm button[type="submit"]');
 
     const teamName = document.getElementById('teamName').value.trim();
@@ -705,31 +789,106 @@ function validateRegistration(e){
         let hasEmptyMember = false;
 
         memberInputs.forEach(function(input){
+
             if(input.value.trim() === ""){
                 hasEmptyMember = true;
             }
+
         });
 
         if(hasEmptyMember){
+
             showWarning("Please enter the name of every team member.");
             valid = false;
+
         }
     }
 
-    // Stop form submission if validation fails
+    // If validation fails, stop form submission
     if(!valid){
-    return false;
+
+        if(e && e.preventDefault){
+            e.preventDefault();
+        }
+
+        return false;
+    }
+
+    // Everything is valid → allow normal form submission
+    if(submitButton){
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Registering...";
+
+    }
+
+    return true;
 }
 
-// Prevent accidental double submission
-if(submitButton){
-    submitButton.disabled = true;
-    submitButton.textContent = "Registering...";
-}
-
-return true;
-}
 function goNext(){
+
+    const form = document.getElementById('registerForm');
+
+    // Check all fields except team-member requirement
+    const teamName = document.getElementById('teamName').value.trim();
+    const collegeName = document.getElementById('collegeName').value.trim();
+    const leaderName = document.getElementById('leaderName').value.trim();
+    const leaderPhone = document.getElementById('leaderPhone').value.trim();
+    const leaderEmail = document.getElementById('leaderEmail').value.trim();
+    const challenge = document.getElementById('challengeSelect').value;
+
+    let valid = true;
+
+    if(teamName === ""){
+        showError('teamNameGroup', true);
+        valid = false;
+    } else {
+        showError('teamNameGroup', false);
+    }
+
+    if(collegeName === ""){
+        showError('collegeNameGroup', true);
+        valid = false;
+    } else {
+        showError('collegeNameGroup', false);
+    }
+
+    if(leaderName === ""){
+        showError('leaderNameGroup', true);
+        valid = false;
+    } else {
+        showError('leaderNameGroup', false);
+    }
+
+    if(!validatePhone(leaderPhone)){
+        showError('leaderPhoneGroup', true);
+        valid = false;
+    } else {
+        showError('leaderPhoneGroup', false);
+    }
+
+    if(!validateEmail(leaderEmail)){
+        showError('leaderEmailGroup', true);
+        valid = false;
+    } else {
+        showError('leaderEmailGroup', false);
+    }
+
+    if(challenge === ""){
+        showError('challengeGroup', true);
+        valid = false;
+    } else {
+        showError('challengeGroup', false);
+    }
+
+    // Next button should show only the common message
+    if(!valid){
+
+        showWarning("Please fill all the required details before continuing.");
+        return;
+
+    }
+
     window.location.href = "/judges-mentors";
 }
 

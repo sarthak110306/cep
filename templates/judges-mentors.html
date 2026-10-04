@@ -923,7 +923,7 @@ let mentorsPage = 1;
 const selectedIds = new Set(
     JSON.parse(document.getElementById("selected-judge-data").textContent)
 );
-
+let selectionInteracted = false;
 function personCardHTML(p){
     const badgeClass = p.role === "Judge" ? "judge" : "mentor";
     const badgeText = p.role === "Judge" ? "Judge" : "Available for Guidance";
@@ -1091,6 +1091,8 @@ document.getElementById('mentorsNext').addEventListener('click', () => {
 function handleSelectClick(e){
     const btn = e.target.closest('.select-judge-btn');
     if(!btn) return;
+
+    selectionInteracted = true;
     const id = parseInt(btn.dataset.id, 10);
     const person = people.find(p => p.id === id);
     let justAdded = false;
@@ -1120,10 +1122,10 @@ function updateSelectedBar(){
     const countEl = document.getElementById('selectedCount');
     const namesEl = document.getElementById('selectedNames');
 
-    if(count === 0){
-        bar.classList.remove('show');
-        return;
-    }
+    if(count === 0 || !selectionInteracted){
+    bar.classList.remove('show');
+    return;
+}
 
     const selectedPeople = people.filter(p => selectedIds.has(p.id));
     const judgeCount = selectedPeople.filter(p => p.role === "Judge").length;
@@ -1138,10 +1140,10 @@ function updateSelectedBar(){
 }
 
 document.getElementById('clearSelectionBtn').addEventListener('click', () => {
+    selectionInteracted = true;
     selectedIds.clear();
     renderPeople();
 });
-
 document.getElementById('confirmSelectionBtn').addEventListener('click', async () => {
     const selected_ids = Array.from(selectedIds);
     const confirmButton = document.getElementById('confirmSelectionBtn');

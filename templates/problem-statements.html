@@ -2,42 +2,22 @@
 <html lang="en">
 
 <head>
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Problem Statements — Community Hackathon for Social Innovation</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
     <link
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
+        rel="stylesheet"
+    >
+
     <style>
-        nav {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: rgba(12, 28, 23, 0.75);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            padding: 16px;
-            text-align: center;
-        }
-
-        nav a {
-            color: var(--text-dim);
-            text-decoration: none;
-            margin: 0 6px;
-            font-weight: 500;
-            font-size: 13.5px;
-            padding: 9px 16px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        nav a:hover,
-        nav a.active {
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.06);
-        }
 
         :root {
             --bg: #07120f;
@@ -72,47 +52,121 @@
             content: '';
             position: fixed;
             inset: 0;
+
             background-image:
-                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+                linear-gradient(
+                    rgba(255, 255, 255, 0.025) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255, 255, 255, 0.025) 1px,
+                    transparent 1px
+                );
+
             background-size: 48px 48px;
             pointer-events: none;
             z-index: 0;
         }
 
-        /* ===== Hero ===== */
+        /* =========================
+           NAV
+        ========================= */
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+
+            background: rgba(12, 28, 23, 0.75);
+            backdrop-filter: blur(10px);
+
+            border-bottom: 1px solid var(--border);
+
+            padding: 16px;
+            text-align: center;
+        }
+
+        nav a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin: 0 6px;
+            font-weight: 500;
+            font-size: 13.5px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* =========================
+           HERO
+        ========================= */
+
         .hero {
             position: relative;
             z-index: 1;
             text-align: center;
+
             padding: 100px 20px 70px;
-            background: radial-gradient(ellipse at top, rgba(61, 220, 151, 0.14), transparent 60%),
-                linear-gradient(180deg, #0a1a15, #07120f);
+
+            background:
+                radial-gradient(
+                    ellipse at top,
+                    rgba(61, 220, 151, 0.14),
+                    transparent 60%
+                ),
+                linear-gradient(
+                    180deg,
+                    #0a1a15,
+                    #07120f
+                );
+
             border-bottom: 1px solid var(--border);
         }
 
         .hero .eyebrow {
             display: inline-block;
+
             font-size: 12px;
             letter-spacing: 2px;
             text-transform: uppercase;
+
             color: var(--accent);
             font-weight: 600;
+
             margin-bottom: 20px;
             padding: 6px 14px;
+
             border: 1px solid rgba(61, 220, 151, 0.35);
             border-radius: 30px;
         }
 
         .hero h1 {
             font-family: 'Space Grotesk', sans-serif;
+
             font-size: 50px;
             font-weight: 700;
             letter-spacing: -1px;
+
             max-width: 750px;
             margin: 0 auto 16px;
+
             line-height: 1.1;
-            background: linear-gradient(90deg, #e9f5f0, #3ddc97 60%, #f0a860);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #e9f5f0,
+                    #3ddc97 60%,
+                    #f0a860
+                );
+
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -121,10 +175,16 @@
         .hero p {
             font-size: 16.5px;
             color: var(--text-dim);
+
             max-width: 560px;
             margin: 0 auto 40px;
+
             letter-spacing: 0.3px;
         }
+
+        /* =========================
+           SEARCH
+        ========================= */
 
         .search-wrap {
             max-width: 520px;
@@ -134,21 +194,32 @@
 
         .search-wrap input {
             width: 100%;
+
             padding: 15px 20px 15px 48px;
+
             border-radius: 14px;
             border: 1px solid var(--border);
+
             background: rgba(255, 255, 255, 0.04);
             backdrop-filter: blur(10px);
+
             color: var(--text);
             font-size: 15px;
             font-family: inherit;
+
             outline: none;
-            transition: border-color .2s ease, box-shadow .2s ease;
+
+            transition:
+                border-color .2s ease,
+                box-shadow .2s ease;
         }
 
         .search-wrap input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(61, 220, 151, 0.12);
+
+            box-shadow:
+                0 0 0 4px
+                rgba(61, 220, 151, 0.12);
         }
 
         .search-wrap input::placeholder {
@@ -157,233 +228,479 @@
 
         .search-wrap svg {
             position: absolute;
+
             left: 18px;
             top: 50%;
+
             transform: translateY(-50%);
+
             width: 18px;
             height: 18px;
+
             stroke: var(--text-dim);
         }
+
+        /* =========================
+           FILTERS
+        ========================= */
 
         .filters {
             display: flex;
             flex-wrap: wrap;
+
             justify-content: center;
             gap: 10px;
+
             padding: 0 20px 10px;
+
             position: relative;
             z-index: 1;
         }
 
         .filter-btn {
             background: rgba(255, 255, 255, 0.04);
+
             border: 1px solid var(--border);
+
             color: var(--text-dim);
+
             padding: 10px 20px;
+
             border-radius: 30px;
+
             font-size: 13.5px;
             font-weight: 500;
             font-family: inherit;
+
             cursor: pointer;
+
             transition: all .25s ease;
         }
 
         .filter-btn:hover {
-            border-color: rgba(61, 220, 151, 0.4);
+            border-color:
+                rgba(61, 220, 151, 0.4);
+
             color: var(--text);
         }
 
         .filter-btn.active {
-            background: linear-gradient(90deg, var(--accent), #7fedbf);
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent),
+                    #7fedbf
+                );
+
             color: #07231a;
+
             border-color: transparent;
+
             font-weight: 700;
-            box-shadow: 0 8px 20px rgba(61, 220, 151, 0.25);
+
+            box-shadow:
+                0 8px 20px
+                rgba(61, 220, 151, 0.25);
         }
 
-        /* ===== Cards grid ===== */
+        /* =========================
+           CARDS
+        ========================= */
+
         .cards-section {
             position: relative;
             z-index: 1;
+
             max-width: 1200px;
+
             margin: 60px auto;
+
             padding: 0 20px;
         }
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(320px, 1fr)
+                );
+
             gap: 26px;
         }
 
         .problem-card {
             position: relative;
-            background: rgba(16, 40, 33, 0.55);
-            border: 1px solid var(--border);
+
+            background:
+                rgba(16, 40, 33, 0.55);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 18px;
+
             padding: 30px;
+
             backdrop-filter: blur(14px);
+
             overflow: hidden;
+
             opacity: 0;
+
             transform: translateY(30px);
+
+            transition:
+                transform .35s ease,
+                border-color .35s ease,
+                box-shadow .35s ease,
+                background .35s ease;
         }
 
         .problem-card.reveal {
-            animation: cardIn .6s ease forwards;
+            animation:
+                cardIn .6s ease forwards;
         }
 
         @keyframes cardIn {
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
 
-        .problem-card {
-            transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
         }
 
         .problem-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(61, 220, 151, 0.4);
-            box-shadow: 0 20px 45px rgba(61, 220, 151, 0.15);
+
+            border-color:
+                rgba(61, 220, 151, 0.4);
+
+            box-shadow:
+                0 20px 45px
+                rgba(61, 220, 151, 0.15);
+        }
+
+        /* =========================
+           SELECTED CARD
+        ========================= */
+
+        .problem-card.selected {
+
+            border: 2px solid var(--accent);
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(61, 220, 151, 0.16),
+                    rgba(16, 40, 33, 0.72)
+                );
+
+            box-shadow:
+                0 0 0 4px rgba(61, 220, 151, 0.08),
+                0 18px 45px rgba(61, 220, 151, 0.20);
+
+            transform: translateY(-5px);
+        }
+
+        .problem-card.selected::after {
+
+            content: "✓ SELECTED";
+
+            position: absolute;
+
+            top: 16px;
+            right: 16px;
+
+            padding: 6px 10px;
+
+            border-radius: 20px;
+
+            background: var(--accent);
+
+            color: #07231a;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing: 0.8px;
+
+            z-index: 5;
+        }
+
+        .problem-card.selected .card-icon {
+
+            background:
+                rgba(61, 220, 151, 0.22);
+
+            border-color:
+                rgba(61, 220, 151, 0.65);
+
+            box-shadow:
+                0 0 0 7px
+                rgba(61, 220, 151, 0.08);
+        }
+
+        .problem-card.selected .btn-solid {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #2fc987,
+                    #72edb5
+                );
+
+            box-shadow:
+                0 8px 22px
+                rgba(61, 220, 151, 0.30);
         }
 
         .problem-card::before {
+
             content: '';
+
             position: absolute;
+
             top: -40%;
             right: -40%;
+
             width: 220px;
             height: 220px;
-            background: radial-gradient(circle, rgba(61, 220, 151, 0.12), transparent 70%);
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(61, 220, 151, 0.12),
+                    transparent 70%
+                );
+
             pointer-events: none;
         }
 
         .card-top {
             display: flex;
+
             justify-content: flex-start;
             align-items: flex-start;
+
             margin-bottom: 18px;
         }
 
         .card-icon {
+
             width: 54px;
             height: 54px;
+
             display: flex;
+
             align-items: center;
             justify-content: center;
+
             font-size: 24px;
-            background: rgba(61, 220, 151, 0.1);
-            border: 1px solid rgba(61, 220, 151, 0.3);
+
+            background:
+                rgba(61, 220, 151, 0.1);
+
+            border:
+                1px solid
+                rgba(61, 220, 151, 0.3);
+
             border-radius: 14px;
-            box-shadow: 0 0 0 6px rgba(61, 220, 151, 0.05);
+
+            box-shadow:
+                0 0 0 6px
+                rgba(61, 220, 151, 0.05);
         }
 
         .problem-card h3 {
-            font-family: 'Space Grotesk', sans-serif;
+
+            font-family:
+                'Space Grotesk',
+                sans-serif;
+
             font-size: 20px;
             font-weight: 700;
+
             margin-bottom: 10px;
+
             color: var(--text);
         }
 
         .problem-card .desc {
+
             color: var(--text-dim);
+
             font-size: 14.5px;
+
             line-height: 1.65;
+
             margin-bottom: 16px;
         }
 
         .mini-label {
+
             font-size: 11px;
+
             text-transform: uppercase;
+
             letter-spacing: 0.8px;
+
             color: var(--accent);
+
             font-weight: 700;
+
             margin-bottom: 6px;
         }
 
         .mini-text {
+
             font-size: 13.5px;
+
             color: var(--text-dim);
+
             margin-bottom: 16px;
+
             line-height: 1.6;
         }
 
         .card-actions {
+
             display: flex;
+
             gap: 10px;
+
             flex-wrap: wrap;
+
             margin-top: 6px;
         }
 
         .btn {
+
             position: relative;
+
             overflow: hidden;
+
             border: none;
+
             border-radius: 10px;
+
             padding: 11px 18px;
+
             font-size: 13.5px;
+
             font-weight: 600;
+
             font-family: inherit;
+
             cursor: pointer;
-            transition: transform .2s ease, box-shadow .2s ease;
+
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease,
+                background .2s ease;
         }
 
         .btn-outline {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
+
+            background:
+                rgba(255, 255, 255, 0.04);
+
+            border:
+                1px solid var(--border);
+
             color: var(--text);
         }
 
         .btn-outline:hover {
-            border-color: rgba(61, 220, 151, 0.4);
+
+            border-color:
+                rgba(61, 220, 151, 0.4);
+
             color: var(--accent);
         }
 
         .btn-solid {
-            background: linear-gradient(90deg, var(--accent), #7fedbf);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent),
+                    #7fedbf
+                );
+
             color: #07231a;
+
             flex: 1;
         }
 
         .btn-solid:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(61, 220, 151, 0.35);
+
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 10px 25px
+                rgba(61, 220, 151, 0.35);
         }
 
         .ripple {
+
             position: absolute;
+
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
+
+            background:
+                rgba(255, 255, 255, 0.5);
+
             transform: scale(0);
-            animation: rippleAnim .6s linear;
+
+            animation:
+                rippleAnim .6s linear;
+
             pointer-events: none;
         }
 
         @keyframes rippleAnim {
+
             to {
                 transform: scale(3);
                 opacity: 0;
             }
+
         }
 
         .no-results {
+
             display: none;
+
             text-align: center;
+
             color: var(--text-dim);
+
             font-size: 15px;
+
             padding: 60px 0;
         }
 
-        /* ===== Stats ===== */
+        /* =========================
+           STATS
+        ========================= */
+
         .stats-section {
+
             position: relative;
+
             z-index: 1;
+
             max-width: 1000px;
+
             margin: 80px auto;
+
             padding: 0 20px;
+
             display: none;
         }
 
@@ -392,33 +709,64 @@
         }
 
         .stats {
+
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(180px, 1fr)
+                );
+
             gap: 20px;
         }
 
         .stat-box {
+
             position: relative;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
+
+            background:
+                var(--bg-panel);
+
+            border:
+                1px solid var(--border);
+
             padding: 32px 20px;
+
             text-align: center;
+
             border-radius: 14px;
+
             overflow: hidden;
+
             transition: .3s ease;
         }
 
         .stat-box::before {
+
             content: '';
+
             position: absolute;
+
             top: 0;
             left: 0;
             right: 0;
+
             height: 2px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent),
+                    var(--accent-soft)
+                );
+
             transform: scaleX(0);
+
             transform-origin: left;
-            transition: transform .35s ease;
+
+            transition:
+                transform .35s ease;
         }
 
         .stat-box:hover::before {
@@ -426,35 +774,64 @@
         }
 
         .stat-box:hover {
-            border-color: rgba(240, 168, 96, 0.4);
-            background: var(--bg-card);
-            transform: translateY(-4px);
+
+            border-color:
+                rgba(240, 168, 96, 0.4);
+
+            background:
+                var(--bg-card);
+
+            transform:
+                translateY(-4px);
         }
 
         .stat-box h2 {
-            font-family: 'Space Grotesk', sans-serif;
+
+            font-family:
+                'Space Grotesk',
+                sans-serif;
+
             font-size: 40px;
+
             font-weight: 700;
+
             color: var(--accent-soft);
         }
 
         .stat-box p {
+
             margin-top: 8px;
+
             color: var(--text-dim);
+
             font-size: 14px;
+
             letter-spacing: 0.3px;
         }
 
-        /* ===== Modal ===== */
+        /* =========================
+           MODAL
+        ========================= */
+
         .modal-overlay {
+
             display: none;
+
             position: fixed;
+
             inset: 0;
-            background: rgba(3, 10, 8, 0.8);
+
+            background:
+                rgba(3, 10, 8, 0.8);
+
             backdrop-filter: blur(8px);
+
             z-index: 50;
+
             align-items: center;
+
             justify-content: center;
+
             padding: 20px;
         }
 
@@ -463,40 +840,75 @@
         }
 
         .modal-box {
+
             position: relative;
+
             width: 100%;
+
             max-width: 560px;
+
             max-height: 85vh;
+
             overflow-y: auto;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
+
+            background:
+                var(--bg-panel);
+
+            border:
+                1px solid var(--border);
+
             padding: 38px 32px;
+
             border-radius: 18px;
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
-            animation: modalIn .3s ease;
+
+            box-shadow:
+                0 30px 70px
+                rgba(0, 0, 0, 0.5);
+
+            animation:
+                modalIn .3s ease;
         }
 
         @keyframes modalIn {
+
             from {
+
                 opacity: 0;
-                transform: translateY(20px) scale(0.97);
+
+                transform:
+                    translateY(20px)
+                    scale(0.97);
             }
 
             to {
+
                 opacity: 1;
-                transform: translateY(0) scale(1);
+
+                transform:
+                    translateY(0)
+                    scale(1);
             }
+
         }
 
         .modal-box .close-btn {
+
             position: absolute;
+
             top: 18px;
+
             right: 20px;
+
             background: none;
+
             border: none;
+
             color: var(--text-dim);
+
             font-size: 20px;
+
             cursor: pointer;
+
             line-height: 1;
         }
 
@@ -505,9 +917,15 @@
         }
 
         .modal-box h2 {
-            font-family: 'Space Grotesk', sans-serif;
+
+            font-family:
+                'Space Grotesk',
+                sans-serif;
+
             font-size: 24px;
+
             margin-bottom: 22px;
+
             color: var(--text);
         }
 
@@ -516,57 +934,111 @@
         }
 
         .modal-box .modal-block h4 {
+
             font-size: 12.5px;
+
             text-transform: uppercase;
+
             letter-spacing: 1px;
+
             color: var(--accent);
+
             margin-bottom: 8px;
         }
 
         .modal-box .modal-block p {
+
             color: var(--text-dim);
+
             font-size: 14.5px;
+
             line-height: 1.7;
         }
 
-        /* ===== Toast ===== */
+        /* =========================
+           TOAST
+        ========================= */
+
         .toast {
+
             position: fixed;
+
             top: 24px;
+
             left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: rgba(61, 220, 151, 0.12);
-            border: 1px solid rgba(61, 220, 151, 0.4);
+
+            transform:
+                translateX(-50%)
+                translateY(-20px);
+
+            background:
+                rgba(61, 220, 151, 0.12);
+
+            border:
+                1px solid
+                rgba(61, 220, 151, 0.4);
+
             color: var(--accent);
+
             padding: 14px 26px;
+
             border-radius: 14px;
+
             font-size: 14px;
+
             font-weight: 600;
+
             backdrop-filter: blur(10px);
+
             z-index: 60;
+
             opacity: 0;
+
             pointer-events: none;
-            transition: opacity .3s ease, transform .3s ease;
+
+            transition:
+                opacity .3s ease,
+                transform .3s ease;
         }
 
         .toast.show {
+
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+
+            transform:
+                translateX(-50%)
+                translateY(0);
         }
 
-        /* ===== Tracker ===== */
+        /* =========================
+           TRACKER
+        ========================= */
+
         .tracker {
+
             position: fixed;
+
             bottom: 0;
+
             left: 0;
+
             right: 0;
+
             z-index: 40;
+
             display: none;
+
             justify-content: center;
+
             padding: 16px 20px;
-            background: rgba(7, 18, 15, 0.9);
+
+            background:
+                rgba(7, 18, 15, 0.9);
+
             backdrop-filter: blur(14px);
-            border-top: 1px solid var(--border);
+
+            border-top:
+                1px solid var(--border);
         }
 
         .tracker.active {
@@ -574,52 +1046,112 @@
         }
 
         .tracker-inner {
+
             display: flex;
+
             align-items: center;
+
             gap: 14px;
-            background: rgba(61, 220, 151, 0.08);
-            border: 1px solid rgba(61, 220, 151, 0.3);
+
+            background:
+                rgba(61, 220, 151, 0.08);
+
+            border:
+                1px solid
+                rgba(61, 220, 151, 0.3);
+
             padding: 12px 22px;
+
             border-radius: 30px;
+
             font-size: 14px;
+
             font-weight: 600;
+
             color: var(--accent);
+
             text-align: center;
+
             flex-wrap: wrap;
+
             justify-content: center;
         }
 
         .tracker-inner .check {
+
             width: 22px;
+
             height: 22px;
+
             border-radius: 50%;
-            background: var(--accent);
+
+            background:
+                var(--accent);
+
             color: #07231a;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             font-size: 12px;
         }
 
-        /* ===== Scroll to top ===== */
+        /* Hide selected problem tracker */
+
+        #tracker {
+            display: none !important;
+        }
+
+        /* =========================
+           SCROLL TOP
+        ========================= */
+
         .scroll-top {
+
             position: fixed;
+
             right: 24px;
+
             bottom: 90px;
+
             width: 46px;
+
             height: 46px;
+
             border-radius: 50%;
-            background: linear-gradient(90deg, var(--accent), #7fedbf);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent),
+                    #7fedbf
+                );
+
             color: #07231a;
+
             border: none;
+
             font-size: 18px;
+
             cursor: pointer;
+
             display: none;
+
             align-items: center;
+
             justify-content: center;
-            box-shadow: 0 10px 25px rgba(61, 220, 151, 0.35);
+
+            box-shadow:
+                0 10px 25px
+                rgba(61, 220, 151, 0.35);
+
             z-index: 45;
-            transition: transform .2s ease;
+
+            transition:
+                transform .2s ease;
         }
 
         .scroll-top.show {
@@ -627,83 +1159,161 @@
         }
 
         .scroll-top:hover {
-            transform: translateY(-3px);
+            transform:
+                translateY(-3px);
         }
 
-        /* ===== Page Nav (Back / Next) ===== */
+        /* =========================
+           PAGE NAV
+        ========================= */
+
         .page-nav {
+
             position: relative;
+
             z-index: 1;
+
             max-width: 1200px;
+
             margin: 20px auto 0;
+
             padding: 0 20px;
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             gap: 16px;
+
             flex-wrap: wrap;
         }
 
         .page-nav-btn {
+
             display: inline-flex;
+
             align-items: center;
+
             gap: 8px;
+
             text-decoration: none;
+
             padding: 13px 24px;
+
             border-radius: 12px;
+
             font-size: 14px;
+
             font-weight: 600;
+
             font-family: inherit;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.04);
+
+            border:
+                1px solid var(--border);
+
+            background:
+                rgba(255, 255, 255, 0.04);
+
             color: var(--text);
-            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+
+            cursor: pointer;
+
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease,
+                border-color .2s ease,
+                background .2s ease;
         }
 
         .page-nav-btn:hover {
-            transform: translateY(-3px);
-            border-color: rgba(61, 220, 151, 0.4);
+
+            transform:
+                translateY(-3px);
+
+            border-color:
+                rgba(61, 220, 151, 0.4);
         }
 
         .page-nav-btn.next {
-            background: linear-gradient(90deg, var(--accent), #7fedbf);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    var(--accent),
+                    #7fedbf
+                );
+
             color: #07231a;
-            border-color: transparent;
-            box-shadow: 0 10px 25px rgba(61, 220, 151, 0.25);
+
+            border-color:
+                transparent;
+
+            box-shadow:
+                0 10px 25px
+                rgba(61, 220, 151, 0.25);
         }
 
         .page-nav-btn.next:hover {
-            box-shadow: 0 14px 32px rgba(61, 220, 151, 0.4);
+
+            box-shadow:
+                0 14px 32px
+                rgba(61, 220, 151, 0.4);
         }
 
         .page-nav-btn .arrow {
+
             font-size: 16px;
+
             line-height: 1;
-            transition: transform .2s ease;
+
+            transition:
+                transform .2s ease;
         }
 
         .page-nav-btn:hover .arrow-left {
-            transform: translateX(-3px);
+            transform:
+                translateX(-3px);
         }
 
         .page-nav-btn:hover .arrow-right {
-            transform: translateX(3px);
+            transform:
+                translateX(3px);
         }
 
-        /* ===== Footer ===== */
+        /* =========================
+           FOOTER
+        ========================= */
+
         footer {
+
             position: relative;
+
             z-index: 1;
+
             text-align: center;
+
             padding: 40px 20px 100px;
+
             color: var(--text-dim);
+
             font-size: 13px;
+
             letter-spacing: 0.3px;
-            border-top: 1px solid var(--border);
+
+            border-top:
+                1px solid var(--border);
+
             margin-top: 40px;
         }
 
+        /* =========================
+           MOBILE
+        ========================= */
+
         @media(max-width:600px) {
+
             .hero h1 {
                 font-size: 34px;
             }
@@ -721,361 +1331,1625 @@
             }
 
             .page-nav-btn {
+
                 flex: 1;
+
                 justify-content: center;
+
                 min-width: 130px;
             }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
     {% include '_flash.html' %}
+
     {% from '_nav.html' import site_nav %}
+
     {{ site_nav('problems') }}
 
+
+    <!-- =========================
+         HERO
+    ========================= -->
+
     <section class="hero">
-        <span class="eyebrow">Community Hackathon for Social Innovation</span>
-        <h1>Choose Your Challenge</h1>
-        <p>Select a real-world social problem and build an innovative solution that creates a positive impact.</p>
+
+        <span class="eyebrow">
+            Community Hackathon for Social Innovation
+        </span>
+
+        <h1>
+            Choose Your Challenge
+        </h1>
+
+        <p>
+            Select a real-world social problem and build
+            an innovative solution that creates a positive impact.
+        </p>
+
 
         <div class="search-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+
+                <circle
+                    cx="11"
+                    cy="11"
+                    r="8"
+                ></circle>
+
+                <line
+                    x1="21"
+                    y1="21"
+                    x2="16.65"
+                    y2="16.65"
+                ></line>
+
             </svg>
-            <input type="text" id="searchInput" placeholder="Search problem statements...">
+
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search problem statements..."
+            >
+
         </div>
 
-        <div class="filters" id="filters">
-            <button class="filter-btn active" data-filter="All">All</button>
-            <button class="filter-btn" data-filter="Education">Education</button>
-            <button class="filter-btn" data-filter="Healthcare">Healthcare</button>
-            <button class="filter-btn" data-filter="Environment">Environment</button>
-            <button class="filter-btn" data-filter="Agriculture">Agriculture</button>
-            <button class="filter-btn" data-filter="Smart City">Smart City</button>
-            <button class="filter-btn" data-filter="Women Safety">Women Safety</button>
+
+        <div
+            class="filters"
+            id="filters"
+        >
+
+            <button
+                class="filter-btn active"
+                data-filter="All"
+            >
+                All
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="Education"
+            >
+                Education
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="Healthcare"
+            >
+                Healthcare
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="Environment"
+            >
+                Environment
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="Agriculture"
+            >
+                Agriculture
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="Smart City"
+            >
+                Smart City
+            </button>
+
+            <button
+                class="filter-btn"
+                data-filter="Women Safety"
+            >
+                Women Safety
+            </button>
+
         </div>
+
     </section>
+
+
+    <!-- =========================
+         CARDS
+    ========================= -->
 
     <section class="cards-section">
-        <div class="cards-grid" id="cardsGrid"></div>
-        <p class="no-results" id="noResults">No problem statements match your search.</p>
+
+        <div
+            class="cards-grid"
+            id="cardsGrid"
+        ></div>
+
+        <p
+            class="no-results"
+            id="noResults"
+        >
+            No problem statements match your search.
+        </p>
+
     </section>
 
-    <section class="stats-section" id="statsSection">
+
+    <!-- =========================
+         STATS
+    ========================= -->
+
+    <section
+        class="stats-section"
+        id="statsSection"
+    >
+
         <div class="stats">
+
             <div class="stat-box">
-                <h2><span class="counter" data-target="20">0</span>+</h2>
-                <p>Challenges</p>
+
+                <h2>
+
+                    <span
+                        class="counter"
+                        data-target="20"
+                    >
+                        0
+                    </span>+
+
+                </h2>
+
+                <p>
+                    Challenges
+                </p>
+
             </div>
+
+
             <div class="stat-box">
-                <h2><span class="counter" data-target="500">0</span>+</h2>
-                <p>Participants</p>
+
+                <h2>
+
+                    <span
+                        class="counter"
+                        data-target="500"
+                    >
+                        0
+                    </span>+
+
+                </h2>
+
+                <p>
+                    Participants
+                </p>
+
             </div>
+
+
             <div class="stat-box">
-                <h2><span class="counter" data-target="100">0</span>+</h2>
-                <p>Teams</p>
+
+                <h2>
+
+                    <span
+                        class="counter"
+                        data-target="100"
+                    >
+                        0
+                    </span>+
+
+                </h2>
+
+                <p>
+                    Teams
+                </p>
+
             </div>
+
+
             <div class="stat-box">
-                <h2><span class="counter" data-target="15">0</span>+</h2>
-                <p>Mentors</p>
+
+                <h2>
+
+                    <span
+                        class="counter"
+                        data-target="15"
+                    >
+                        0
+                    </span>+
+
+                </h2>
+
+                <p>
+                    Mentors
+                </p>
+
             </div>
+
         </div>
+
     </section>
+
+
+    <!-- =========================
+         PAGE NAVIGATION
+    ========================= -->
 
     <div class="page-nav">
-        <a href="{{ url_for('home') }}" class="page-nav-btn back">
-            <span class="arrow arrow-left">←</span> Back
+
+        <a
+            href="{{ url_for('home') }}"
+            class="page-nav-btn back"
+        >
+
+            <span class="arrow arrow-left">
+                ←
+            </span>
+
+            Back
+
         </a>
-        <button class="page-nav-btn next" onclick="goNext()">
-            Next <span class="arrow arrow-right">→</span>
+
+
+        <button
+            class="page-nav-btn next"
+            onclick="goNext()"
+        >
+
+            Next
+
+            <span class="arrow arrow-right">
+                →
+            </span>
+
         </button>
+
     </div>
+
+
+    <!-- =========================
+         FOOTER
+    ========================= -->
 
     <footer>
         © 2026 Community Hackathon for Social Innovation
     </footer>
 
-    <div class="toast" id="toast">✅ Challenge Selected Successfully</div>
 
-    <div class="modal-overlay" id="modalOverlay">
+    <!-- =========================
+         TOAST
+    ========================= -->
+
+    <div
+        class="toast"
+        id="toast"
+    >
+        ✅ Challenge Selected Successfully
+    </div>
+
+
+    <!-- =========================
+         MODAL
+    ========================= -->
+
+    <div
+        class="modal-overlay"
+        id="modalOverlay"
+    >
+
         <div class="modal-box">
-            <button class="close-btn" onclick="closeModal()">✕</button>
+
+            <button
+                class="close-btn"
+                onclick="closeModal()"
+            >
+                ✕
+            </button>
+
+
             <h2 id="modalTitle"></h2>
 
+
             <div class="modal-block">
-                <h4>Complete Problem Description</h4>
+
+                <h4>
+                    Complete Problem Description
+                </h4>
+
                 <p id="modalDesc"></p>
+
             </div>
+
+
             <div class="modal-block">
-                <h4>Real-world Example</h4>
+
+                <h4>
+                    Real-world Example
+                </h4>
+
                 <p id="modalExample"></p>
+
             </div>
+
+
             <div class="modal-block">
-                <h4>Suggested Solution</h4>
+
+                <h4>
+                    Suggested Solution
+                </h4>
+
                 <p id="modalSolution"></p>
+
             </div>
+
+
             <div class="modal-block">
-                <h4>Technologies That Can Be Used</h4>
+
+                <h4>
+                    Technologies That Can Be Used
+                </h4>
+
                 <p id="modalTech"></p>
+
             </div>
+
+
             <div class="modal-block">
-                <h4>Why This Problem Is Important</h4>
+
+                <h4>
+                    Why This Problem Is Important
+                </h4>
+
                 <p id="modalImportance"></p>
+
             </div>
+
         </div>
+
     </div>
 
-    <div class="tracker" id="tracker">
+
+    <!-- =========================
+         SELECTED PROBLEM TRACKER
+    ========================= -->
+
+    <div
+        class="tracker"
+        id="tracker"
+    >
+
         <div class="tracker-inner">
-            <span class="check">✓</span>
-            <span>Selected Challenge: <span id="trackerName"></span></span>
+
+            <span class="check">
+                ✓
+            </span>
+
+            <span>
+
+                Selected Problem:
+
+                <strong id="trackerName"></strong>
+
+            </span>
+
         </div>
+
     </div>
 
-    <button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+    <!-- =========================
+         SCROLL TOP
+    ========================= -->
+
+    <button
+        class="scroll-top"
+        id="scrollTopBtn"
+        onclick="window.scrollTo({top:0,behavior:'smooth'})"
+    >
+        ↑
+    </button>
+
+
+    <!-- =========================
+         JINJA DATA
+    ========================= -->
+
+    <script
+        type="application/json"
+        id="problemsData"
+    >
+        {{ problems | tojson }}
+    </script>
+
+
+    <script
+        type="application/json"
+        id="selectedProblemId"
+    >
+        {{ selected_id | tojson }}
+    </script>
+
+
+    <!-- =========================
+         MAIN JAVASCRIPT
+    ========================= -->
 
     <script>
-        const problems = {{ problems | tojson }};
-        let challengeChosen = {{ 'true' if selected_id else 'false' }};
-        {% if selected_id %}
-        document.addEventListener('DOMContentLoaded', function(){
-            const sel = problems.find(p => p.id === {{ selected_id }});
-            if(sel){
-                document.getElementById('trackerName').textContent = sel.title;
-                document.getElementById('tracker').classList.add('active');
-            }
-        });
-        {% endif %}
 
-        const grid = document.getElementById('cardsGrid');
-        const noResults = document.getElementById('noResults');
-        const statsSection = document.getElementById('statsSection');
+        const problemsData =
+            document.getElementById(
+                'problemsData'
+            );
+
+
+        const problems =
+            problemsData
+                ? JSON.parse(
+                    problemsData.textContent
+                )
+                : [];
+
+
+        const selectedIdElement =
+            document.getElementById(
+                'selectedProblemId'
+            );
+
+
+        const selectedProblemId =
+            selectedIdElement
+                ? JSON.parse(
+                    selectedIdElement.textContent
+                )
+                : null;
+
+
+        /*
+         * IMPORTANT:
+         * This variable keeps the CURRENT selection.
+         *
+         * Previously selectedProblemId was const,
+         * so after selecting a new challenge,
+         * renderCards() could still think the old
+         * challenge was selected.
+         */
+
+        let currentSelectedProblemId =
+            selectedProblemId !== null
+                ? Number(selectedProblemId)
+                : null;
+
+
+        let challengeChosen =
+            currentSelectedProblemId !== null;
+
+
+        const grid =
+            document.getElementById(
+                'cardsGrid'
+            );
+
+
+        const noResults =
+            document.getElementById(
+                'noResults'
+            );
+
+
+        const statsSection =
+            document.getElementById(
+                'statsSection'
+            );
+
+
         let activeFilter = "All";
+
         let searchTerm = "";
 
-        function renderCards() {
-            grid.innerHTML = "";
-            const filtered = problems.filter(p => {
-                const matchesFilter = activeFilter === "All" || p.category === activeFilter;
-                const matchesSearch = p.title.toLowerCase().includes(searchTerm) ||
-                    p.desc.toLowerCase().includes(searchTerm) ||
-                    p.category.toLowerCase().includes(searchTerm);
-                return matchesFilter && matchesSearch;
-            });
 
-            if (filtered.length === 0) {
-                noResults.style.display = "block";
-            } else {
-                noResults.style.display = "none";
-            }
+        /* =========================
+           RESTORE SELECTED PROBLEM
+        ========================= */
 
-            filtered.forEach((p, index) => {
-                const card = document.createElement('div');
-                card.className = "problem-card";
-                card.style.animationDelay = (index * 0.08) + "s";
+        function restoreSelectedProblem() {
 
-                card.innerHTML = `
-        <div class="card-top">
-            <div class="card-icon">${p.icon}</div>
-        </div>
-        <h3>${p.title}</h3>
-        <p class="desc">${p.desc}</p>
-
-        <div class="mini-label">Suggested Technologies</div>
-        <p class="mini-text">${p.tech}</p>
-
-        <div class="mini-label">Expected Social Impact</div>
-        <p class="mini-text">${p.impact}</p>
-
-        <div class="card-actions">
-            <button class="btn btn-outline" onclick="openModal(${p.id})">View Details</button>
-            <button class="btn btn-solid" onclick="selectChallenge(${p.id})">Choose This Challenge</button>
-        </div>
-    `;
-                grid.appendChild(card);
-            });
-
-            requestAnimationFrame(() => {
-                document.querySelectorAll('.problem-card').forEach(c => c.classList.add('reveal'));
-            });
-
-            // Stats section only visible when "All" filter is active
-            if (activeFilter === "All") {
-                statsSection.classList.add('show-stats');
-                if (!statsStarted) observeStatsIfVisible();
-            } else {
-                statsSection.classList.remove('show-stats');
-            }
-        }
-
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            searchTerm = e.target.value.toLowerCase();
-            renderCards();
-        });
-
-        document.getElementById('filters').addEventListener('click', (e) => {
-            if (e.target.classList.contains('filter-btn')) {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                activeFilter = e.target.dataset.filter;
-                renderCards();
-            }
-        });
-
-        function openModal(id) {
-            const p = problems.find(x => x.id === id);
-            if (!p) return;
-            document.getElementById('modalTitle').textContent = p.title;
-            document.getElementById('modalDesc').textContent = p.desc;
-            document.getElementById('modalExample').textContent = p.example;
-            document.getElementById('modalSolution').textContent = p.solution;
-            document.getElementById('modalTech').textContent = p.tech;
-            document.getElementById('modalImportance').textContent = p.importance;
-            document.getElementById('modalOverlay').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
-        }
-
-        document.getElementById('modalOverlay').addEventListener('click', function (e) {
-            if (e.target === this) closeModal();
-        });
-
-        let toastTimeout;
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.add('show');
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2200);
-        }
-
-        let selectedProblemId = {{ selected_id or 'null' }};
-
-        function selectChallenge(id) {
-            const p = problems.find(x => x.id === id);
-            if (!p) return;
-            fetch('/problems/' + id + '/select', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    challengeChosen = true;
-                    selectedProblemId = id;
-                    document.getElementById('trackerName').textContent = p.title;
-                    document.getElementById('tracker').classList.add('active');
-                    showToast();
-                } else {
-                    showWarning(data.message || 'Could not select challenge');
-                }
-            })
-            .catch(() => showWarning('Could not save selection. Please try again.'));
-        }
-
-        function goNext() {
-            if (!challengeChosen) {
-                showWarning("⚠️ Please choose a challenge before proceeding");
+            if (currentSelectedProblemId === null) {
                 return;
             }
-            window.location.href = "{{ url_for('team_registration') }}";
+
+
+            const selectedProblem =
+                problems.find(
+                    p =>
+                        Number(p.id) ===
+                        Number(currentSelectedProblemId)
+                );
+
+
+            if (!selectedProblem) {
+                return;
+            }
+
+
+            const trackerName =
+                document.getElementById(
+                    'trackerName'
+                );
+
+
+            const tracker =
+                document.getElementById(
+                    'tracker'
+                );
+
+
+            if (trackerName) {
+
+                trackerName.textContent =
+                    selectedProblem.title;
+
+            }
+
+
+            /*
+             * Tracker remains hidden.
+             * The selected card itself will
+             * show the selected state.
+             */
+
+            if (tracker) {
+
+                tracker.classList.remove(
+                    'active'
+                );
+
+            }
+
         }
+
+
+        /* =========================
+           RENDER CARDS
+        ========================= */
+
+        function renderCards() {
+
+            grid.innerHTML = "";
+
+
+            const filtered =
+                problems.filter(p => {
+
+                    const matchesFilter =
+                        activeFilter === "All" ||
+                        p.category === activeFilter;
+
+
+                    const matchesSearch =
+                        p.title
+                            .toLowerCase()
+                            .includes(searchTerm) ||
+
+                        p.desc
+                            .toLowerCase()
+                            .includes(searchTerm) ||
+
+                        p.category
+                            .toLowerCase()
+                            .includes(searchTerm);
+
+
+                    return (
+                        matchesFilter &&
+                        matchesSearch
+                    );
+
+                });
+
+
+            if (filtered.length === 0) {
+
+                noResults.style.display =
+                    "block";
+
+            } else {
+
+                noResults.style.display =
+                    "none";
+
+            }
+
+
+            filtered.forEach(
+                (p, index) => {
+
+                    const card =
+                        document.createElement(
+                            'div'
+                        );
+
+
+                    card.className =
+                        "problem-card";
+
+
+                    card.dataset.problemId =
+                        p.id;
+
+
+                    /*
+                     * IMPORTANT:
+                     * Always compare against
+                     * currentSelectedProblemId.
+                     *
+                     * This means the latest selected
+                     * challenge gets highlighted.
+                     */
+
+                    if (
+                        currentSelectedProblemId !== null &&
+                        Number(p.id) ===
+                        Number(currentSelectedProblemId)
+                    ) {
+
+                        card.classList.add(
+                            "selected"
+                        );
+
+                    }
+
+
+                    card.style.animationDelay =
+                        (index * 0.08) + "s";
+
+
+                    const isSelected =
+                        currentSelectedProblemId !== null &&
+                        Number(p.id) ===
+                        Number(currentSelectedProblemId);
+
+
+                    card.innerHTML = `
+
+                        <div class="card-top">
+
+                            <div class="card-icon">
+                                ${p.icon}
+                            </div>
+
+                        </div>
+
+
+                        <h3>
+                            ${p.title}
+                        </h3>
+
+
+                        <p class="desc">
+                            ${p.desc}
+                        </p>
+
+
+                        <div class="mini-label">
+                            Suggested Technologies
+                        </div>
+
+
+                        <p class="mini-text">
+                            ${p.tech}
+                        </p>
+
+
+                        <div class="mini-label">
+                            Expected Social Impact
+                        </div>
+
+
+                        <p class="mini-text">
+                            ${p.impact}
+                        </p>
+
+
+                        <div class="card-actions">
+
+                            <button
+                                class="btn btn-outline"
+                                onclick="openModal(${p.id})"
+                            >
+                                View Details
+                            </button>
+
+
+                            <button
+                                class="btn btn-solid"
+                                onclick="selectChallenge(${p.id})"
+                            >
+                                ${
+                                    isSelected
+                                        ? "✓ Selected Challenge"
+                                        : "Choose This Challenge"
+                                }
+                            </button>
+
+                        </div>
+
+                    `;
+
+
+                    grid.appendChild(card);
+
+                }
+
+            );
+
+
+            requestAnimationFrame(() => {
+
+                document
+                    .querySelectorAll(
+                        '.problem-card'
+                    )
+                    .forEach(card => {
+
+                        card.classList.add(
+                            'reveal'
+                        );
+
+                    });
+
+            });
+
+
+            if (activeFilter === "All") {
+
+                statsSection.classList.add(
+                    'show-stats'
+                );
+
+
+                if (!statsStarted) {
+
+                    observeStatsIfVisible();
+
+                }
+
+            } else {
+
+                statsSection.classList.remove(
+                    'show-stats'
+                );
+
+            }
+
+        }
+
+
+        /* =========================
+           SEARCH
+        ========================= */
+
+        document
+            .getElementById(
+                'searchInput'
+            )
+            .addEventListener(
+                'input',
+                function (e) {
+
+                    searchTerm =
+                        e.target.value
+                            .toLowerCase();
+
+
+                    renderCards();
+
+                }
+            );
+
+
+        /* =========================
+           FILTERS
+        ========================= */
+
+        document
+            .getElementById(
+                'filters'
+            )
+            .addEventListener(
+                'click',
+                function (e) {
+
+                    if (
+                        e.target.classList.contains(
+                            'filter-btn'
+                        )
+                    ) {
+
+                        document
+                            .querySelectorAll(
+                                '.filter-btn'
+                            )
+                            .forEach(
+                                button => {
+
+                                    button.classList.remove(
+                                        'active'
+                                    );
+
+                                }
+                            );
+
+
+                        e.target.classList.add(
+                            'active'
+                        );
+
+
+                        activeFilter =
+                            e.target.dataset.filter;
+
+
+                        renderCards();
+
+                    }
+
+                }
+            );
+
+
+        /* =========================
+           MODAL
+        ========================= */
+
+        function openModal(id) {
+
+            const problem =
+                problems.find(
+                    p =>
+                        Number(p.id) ===
+                        Number(id)
+                );
+
+
+            if (!problem) {
+                return;
+            }
+
+
+            document
+                .getElementById(
+                    'modalTitle'
+                )
+                .textContent =
+                problem.title;
+
+
+            document
+                .getElementById(
+                    'modalDesc'
+                )
+                .textContent =
+                problem.desc;
+
+
+            document
+                .getElementById(
+                    'modalExample'
+                )
+                .textContent =
+                problem.example;
+
+
+            document
+                .getElementById(
+                    'modalSolution'
+                )
+                .textContent =
+                problem.solution;
+
+
+            document
+                .getElementById(
+                    'modalTech'
+                )
+                .textContent =
+                problem.tech;
+
+
+            document
+                .getElementById(
+                    'modalImportance'
+                )
+                .textContent =
+                problem.importance;
+
+
+            document
+                .getElementById(
+                    'modalOverlay'
+                )
+                .classList.add(
+                    'active'
+                );
+
+        }
+
+
+        function closeModal() {
+
+            document
+                .getElementById(
+                    'modalOverlay'
+                )
+                .classList.remove(
+                    'active'
+                );
+
+        }
+
+
+        document
+            .getElementById(
+                'modalOverlay'
+            )
+            .addEventListener(
+                'click',
+                function (e) {
+
+                    if (e.target === this) {
+
+                        closeModal();
+
+                    }
+
+                }
+            );
+
+
+        /* =========================
+           TOAST
+        ========================= */
+
+        let toastTimeout;
+
+
+        function showToast() {
+
+            const toast =
+                document.getElementById(
+                    'toast'
+                );
+
+
+            toast.textContent =
+                "✅ Challenge Selected Successfully";
+
+
+            toast.style.background =
+                "rgba(61, 220, 151, 0.12)";
+
+
+            toast.style.borderColor =
+                "rgba(61, 220, 151, 0.4)";
+
+
+            toast.style.color =
+                "var(--accent)";
+
+
+            toast.classList.add(
+                'show'
+            );
+
+
+            clearTimeout(
+                toastTimeout
+            );
+
+
+            toastTimeout =
+                setTimeout(
+                    () => {
+
+                        toast.classList.remove(
+                            'show'
+                        );
+
+                    },
+                    2200
+                );
+
+        }
+
+
+        /* =========================
+           WARNING
+        ========================= */
 
         let warningTimeout;
+
+
         function showWarning(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.style.background = "rgba(240, 96, 96, 0.12)";
-            toast.style.borderColor = "rgba(240, 96, 96, 0.4)";
-            toast.style.color = "#f06060";
-            toast.classList.add('show');
-            clearTimeout(warningTimeout);
-            warningTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-                // reset toast to original green style after hiding
-                toast.style.background = "";
-                toast.style.borderColor = "";
-                toast.style.color = "";
-                toast.textContent = "✅ Challenge Selected Successfully";
-            }, 2200);
+
+            const toast =
+                document.getElementById(
+                    'toast'
+                );
+
+
+            toast.textContent =
+                message;
+
+
+            toast.style.background =
+                "rgba(240, 96, 96, 0.12)";
+
+
+            toast.style.borderColor =
+                "rgba(240, 96, 96, 0.4)";
+
+
+            toast.style.color =
+                "#f06060";
+
+
+            toast.classList.add(
+                'show'
+            );
+
+
+            clearTimeout(
+                warningTimeout
+            );
+
+
+            warningTimeout =
+                setTimeout(
+                    () => {
+
+                        toast.classList.remove(
+                            'show'
+                        );
+
+
+                        toast.style.background =
+                            "";
+
+                        toast.style.borderColor =
+                            "";
+
+                        toast.style.color =
+                            "";
+
+                        toast.textContent =
+                            "✅ Challenge Selected Successfully";
+
+                    },
+                    2200
+                );
+
         }
+
+
+        /* =========================
+           SELECT CHALLENGE
+        ========================= */
+
+        function selectChallenge(id) {
+
+            const problem =
+                problems.find(
+                    p =>
+                        Number(p.id) ===
+                        Number(id)
+                );
+
+
+            if (!problem) {
+                return;
+            }
+
+
+            fetch(
+                '/problems/' + id + '/select',
+                {
+                    method: 'POST',
+
+                    headers: {
+
+                        'Content-Type':
+                            'application/json',
+
+                        'X-CSRFToken':
+                            document
+                                .querySelector(
+                                    'meta[name="csrf-token"]'
+                                )
+                                .getAttribute(
+                                    'content'
+                                )
+
+                    }
+                }
+            )
+
+            .then(
+                response =>
+                    response.json()
+            )
+
+            .then(
+                data => {
+
+                    if (data.success) {
+
+
+                        /*
+                         * IMPORTANT:
+                         * Update the CURRENT selected ID.
+                         *
+                         * This fixes the old problem
+                         * remaining highlighted after
+                         * selecting a new problem.
+                         */
+
+                        currentSelectedProblemId =
+                            Number(id);
+
+
+                        challengeChosen =
+                            true;
+
+
+                        /*
+                         * Remove old selection
+                         * from all cards.
+                         */
+
+                        document
+                            .querySelectorAll(
+                                '.problem-card.selected'
+                            )
+                            .forEach(
+                                card => {
+
+                                    card.classList.remove(
+                                        'selected'
+                                    );
+
+                                }
+                            );
+
+
+                        /*
+                         * Highlight newly selected card.
+                         */
+
+                        const selectedCard =
+                            document.querySelector(
+                                `.problem-card[data-problem-id="${id}"]`
+                            );
+
+
+                        if (selectedCard) {
+
+                            selectedCard.classList.add(
+                                'selected'
+                            );
+
+                        }
+
+
+                        /*
+                         * Re-render the cards so
+                         * the button changes to
+                         * "✓ Selected Challenge".
+                         */
+
+                        renderCards();
+
+
+                        /*
+                         * Keep tracker data updated,
+                         * although tracker itself is hidden.
+                         */
+
+                        const trackerName =
+                            document.getElementById(
+                                'trackerName'
+                            );
+
+
+                        const tracker =
+                            document.getElementById(
+                                'tracker'
+                            );
+
+
+                        if (trackerName) {
+
+                            trackerName.textContent =
+                                problem.title;
+
+                        }
+
+
+                        if (tracker) {
+
+                            tracker.classList.remove(
+                                'active'
+                            );
+
+                        }
+
+
+                        showToast();
+
+                    } else {
+
+                        showWarning(
+                            data.message ||
+                            'Could not select challenge'
+                        );
+
+                    }
+
+                }
+            )
+
+            .catch(
+                () => {
+
+                    showWarning(
+                        'Could not save selection. Please try again.'
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =========================
+           NEXT BUTTON
+        ========================= */
+
+        function goNext() {
+
+            if (!challengeChosen) {
+
+                showWarning(
+                    "⚠️ Please choose a challenge before proceeding"
+                );
+
+                return;
+
+            }
+
+
+            window.location.href =
+                "{{ url_for('team_registration') }}";
+
+        }
+
+
+        /* =========================
+           RIPPLE EFFECT
+        ========================= */
 
         function createRipple(e) {
-            const btn = e.target.closest('.btn');
-            if (!btn) return;
-            const circle = document.createElement('span');
-            const diameter = Math.max(btn.clientWidth, btn.clientHeight);
-            const radius = diameter / 2;
-            const rect = btn.getBoundingClientRect();
-            circle.style.width = circle.style.height = diameter + "px";
-            circle.style.left = (e.clientX - rect.left - radius) + "px";
-            circle.style.top = (e.clientY - rect.top - radius) + "px";
-            circle.classList.add('ripple');
-            const existing = btn.querySelector('.ripple');
-            if (existing) existing.remove();
-            btn.style.position = "relative";
-            btn.style.overflow = "hidden";
-            btn.appendChild(circle);
-            setTimeout(() => circle.remove(), 600);
+
+            const button =
+                e.target.closest(
+                    '.btn'
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            const circle =
+                document.createElement(
+                    'span'
+                );
+
+
+            const diameter =
+                Math.max(
+                    button.clientWidth,
+                    button.clientHeight
+                );
+
+
+            const radius =
+                diameter / 2;
+
+
+            const rect =
+                button.getBoundingClientRect();
+
+
+            circle.style.width =
+                diameter + "px";
+
+
+            circle.style.height =
+                diameter + "px";
+
+
+            circle.style.left =
+                (
+                    e.clientX -
+                    rect.left -
+                    radius
+                ) + "px";
+
+
+            circle.style.top =
+                (
+                    e.clientY -
+                    rect.top -
+                    radius
+                ) + "px";
+
+
+            circle.classList.add(
+                'ripple'
+            );
+
+
+            const existing =
+                button.querySelector(
+                    '.ripple'
+                );
+
+
+            if (existing) {
+                existing.remove();
+            }
+
+
+            button.style.position =
+                "relative";
+
+
+            button.style.overflow =
+                "hidden";
+
+
+            button.appendChild(
+                circle
+            );
+
+
+            setTimeout(
+                () => {
+
+                    circle.remove();
+
+                },
+                600
+            );
+
         }
 
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.btn')) {
-                createRipple(e);
+
+        document.addEventListener(
+            'click',
+            function (e) {
+
+                if (
+                    e.target.closest('.btn')
+                ) {
+
+                    createRipple(e);
+
+                }
+
             }
-        });
+        );
+
+
+        /* =========================
+           COUNTERS
+        ========================= */
 
         function animateCounters() {
-            const counters = document.querySelectorAll('.counter');
-            counters.forEach(el => {
-                const target = parseInt(el.dataset.target, 10);
-                const duration = 1200;
-                const startTime = performance.now();
-                function tick(now) {
-                    const progress = Math.min((now - startTime) / duration, 1);
-                    const eased = 1 - Math.pow(1 - progress, 3);
-                    el.textContent = Math.floor(eased * target);
-                    if (progress < 1) requestAnimationFrame(tick);
-                    else el.textContent = target;
+
+            const counters =
+                document.querySelectorAll(
+                    '.counter'
+                );
+
+
+            counters.forEach(
+                element => {
+
+                    const target =
+                        parseInt(
+                            element.dataset.target,
+                            10
+                        );
+
+
+                    const duration =
+                        1200;
+
+
+                    const startTime =
+                        performance.now();
+
+
+                    function tick(now) {
+
+                        const progress =
+                            Math.min(
+                                (
+                                    now -
+                                    startTime
+                                ) /
+                                duration,
+                                1
+                            );
+
+
+                        const eased =
+                            1 -
+                            Math.pow(
+                                1 - progress,
+                                3
+                            );
+
+
+                        element.textContent =
+                            Math.floor(
+                                eased * target
+                            );
+
+
+                        if (
+                            progress < 1
+                        ) {
+
+                            requestAnimationFrame(
+                                tick
+                            );
+
+                        } else {
+
+                            element.textContent =
+                                target;
+
+                        }
+
+                    }
+
+
+                    requestAnimationFrame(
+                        tick
+                    );
+
                 }
-                requestAnimationFrame(tick);
-            });
+            );
+
         }
+
 
         let statsStarted = false;
         let statsObserver = null;
+
+
         function observeStatsIfVisible() {
-            if (statsObserver) statsObserver.disconnect();
-            statsObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting && !statsStarted) {
-                        statsStarted = true;
-                        animateCounters();
-                        statsObserver.disconnect();
+
+            if (statsObserver) {
+
+                statsObserver.disconnect();
+
+            }
+
+
+            statsObserver =
+                new IntersectionObserver(
+                    function (entries) {
+
+                        entries.forEach(
+                            entry => {
+
+                                if (
+                                    entry.isIntersecting &&
+                                    !statsStarted
+                                ) {
+
+                                    statsStarted =
+                                        true;
+
+
+                                    animateCounters();
+
+
+                                    statsObserver.disconnect();
+
+                                }
+
+                            }
+                        );
+
+                    },
+                    {
+                        threshold: 0.2
                     }
-                });
-            }, { threshold: 0.2 });
-            if (statsSection) statsObserver.observe(statsSection);
+                );
+
+
+            if (statsSection) {
+
+                statsObserver.observe(
+                    statsSection
+                );
+
+            }
+
         }
 
-        window.addEventListener('scroll', () => {
-            const btn = document.getElementById('scrollTopBtn');
-            if (window.scrollY > 400) {
-                btn.classList.add('show');
-            } else {
-                btn.classList.remove('show');
+
+        /* =========================
+           SCROLL TOP
+        ========================= */
+
+        window.addEventListener(
+            'scroll',
+            function () {
+
+                const button =
+                    document.getElementById(
+                        'scrollTopBtn'
+                    );
+
+
+                if (
+                    window.scrollY > 400
+                ) {
+
+                    button.classList.add(
+                        'show'
+                    );
+
+                } else {
+
+                    button.classList.remove(
+                        'show'
+                    );
+
+                }
+
             }
-        });
+        );
+
+
+        /* =========================
+           INITIALIZE
+        ========================= */
+
+        restoreSelectedProblem();
 
         renderCards();
+
     </script>
 
 </body>
