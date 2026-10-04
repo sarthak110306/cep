@@ -1471,6 +1471,19 @@ def confirm_registration():
 # Certificate Routes
 # =========================
 
+@app.route("/certificate-design-preview")
+def certificate_design_preview():
+    return render_template(
+        "certificate-design.html",
+        participant_name="Sarthak Dhamankar",
+        team_name="FGH Teams",
+        problem_statement="Emergency Safety Companion",
+        event_name="Community Hackathon 2026",
+        issued_date="02 October 2026",
+        certificate_id="CERT-HACK2026-00006"
+    )
+
+
 @app.route("/certificates")
 @login_required
 def certificates():
@@ -1493,11 +1506,11 @@ def certificates():
             (session["user_id"],)
         )
 
-        certificates = cursor.fetchall()
+        certificate_list = cursor.fetchall()
 
         return render_template(
             "certificates.html",
-            certificates=certificates
+            certificates=certificate_list
         )
 
     finally:
@@ -1508,10 +1521,14 @@ def certificates():
 @app.route("/download-certificate/<certificate_id>")
 @login_required
 def download_certificate(certificate_id):
+
     conn = get_db_connection()
     cursor = dict_cursor(conn)
 
     try:
+        # =========================================================
+        # 1. GET CERTIFICATE DATA
+        # =========================================================
         cursor.execute(
             """
             SELECT certificate_id,
@@ -1534,183 +1551,192 @@ def download_certificate(certificate_id):
             flash("Certificate not found.", "error")
             return redirect(url_for("certificates"))
 
+
+        # =========================================================
+        # 2. GET CURRENT TEAM + TEAM LEADER + PROBLEM STATEMENT
+        # =========================================================
         cursor.execute(
             """
-            SELECT name
-            FROM users
-            WHERE id = %s
+            SELECT
+                t.team_leader,
+                t.team_name,
+                ps.title AS problem_title
+            FROM teams t
+            LEFT JOIN problem_statements ps
+                ON ps.id = t.problem_statement_id
+            WHERE t.user_id = %s
+            ORDER BY t.id DESC
             LIMIT 1
             """,
             (session["user_id"],)
         )
 
-        user = cursor.fetchone()
+        team_data = cursor.fetchone()
 
-        participant_name = (
-            user["name"]
-            if user and user.get("name")
-            else "Participant"
+
+        # =========================================================
+        # 3. PARTICIPANT NAME
+        # =========================================================
+        participant_name = "Participant"
+
+        if team_data and team_data.get("team_leader"):
+            participant_name = team_data["team_leader"].strip()
+
+
+        # =========================================================
+        # 4. TEAM NAME
+        # =========================================================
+        team_name = certificate.get("team_name") or "N/A"
+
+        if team_data and team_data.get("team_name"):
+            team_name = team_data["team_name"].strip()
+
+
+        # =========================================================
+        # 5. PROBLEM STATEMENT
+        # =========================================================
+        problem_statement = certificate.get("problem_statement") or "N/A"
+
+        if team_data and team_data.get("problem_title"):
+            problem_statement = team_data["problem_title"].strip()
+
+
+        # =========================================================
+        # 6. GET SELECTED EVENT
+        # =========================================================
+        event_name = "N/A"
+
+        try:
+            cursor.execute(
+                """
+                SELECT e.event_name
+                FROM events e
+                JOIN user_event_selections ues
+                    ON ues.event_id = e.id
+                WHERE ues.user_id = %s
+                ORDER BY e.event_date, e.event_time
+                LIMIT 1
+                """,
+                (session["user_id"],)
+            )
+
+            event_data = cursor.fetchone()
+
+            if event_data and event_data.get("event_name"):
+                event_name = event_data["event_name"].strip()
+
+        except Exception:
+            # If event selection is unavailable,
+            # certificate generation should still continue.
+            event_name = "Community Hackathon 2026"
+
+
+        # =========================================================
+        # 7. DATE OF ISSUE
+        # =========================================================
+        # Actual date on which certificate is downloaded.
+        from datetime import datetime
+
+        issued_date = datetime.now().strftime("%d %B %Y")
+
+
+        # =========================================================
+        # 8. CERTIFICATE ID
+        # =========================================================
+        actual_certificate_id = (
+            certificate.get("certificate_id")
+            or certificate_id
         )
 
+
         # =========================================================
-        # A4 LANDSCAPE
+        # 9. CREATE PDF BUFFER
         # =========================================================
+        from io import BytesIO
+
         buffer = BytesIO()
 
-        landscape_a4 = (A4[1], A4[0])
+        # A4 LANDSCAPE
+        page_width = A4[1]
+        page_height = A4[0]
 
         pdf = canvas.Canvas(
             buffer,
-            pagesize=landscape_a4
+            pagesize=(page_width, page_height)
         )
 
-        width, height = landscape_a4
 
         # =========================================================
-        # COLORS
+        # 10. COLORS
         # =========================================================
-        navy = colors.HexColor("#10245A")
-        blue = colors.HexColor("#1769E8")
-        bright_blue = colors.HexColor("#2878F0")
-        purple = colors.HexColor("#7357D9")
-        dark_text = colors.HexColor("#172B5F")
-        muted = colors.HexColor("#68789B")
-
-        very_light_blue = colors.HexColor("#F4F8FF")
-        light_blue = colors.HexColor("#EAF3FF")
-        light_purple = colors.HexColor("#F4F0FF")
-
-        border_blue = colors.HexColor("#AFC8F5")
+        navy = colors.HexColor("#123B63")
+        blue = colors.HexColor("#2E75B6")
+        light_blue = colors.HexColor("#EAF3FA")
+        dark_text = colors.HexColor("#243447")
+        grey = colors.HexColor("#667085")
+        border = colors.HexColor("#D5DEE8")
         white = colors.white
 
+
         # =========================================================
-        # BACKGROUND
+        # 11. BACKGROUND
         # =========================================================
         pdf.setFillColor(white)
         pdf.rect(
             0,
             0,
-            width,
-            height,
+            page_width,
+            page_height,
             fill=1,
             stroke=0
         )
 
-        # =========================================================
-        # BACKGROUND DECORATIONS
-        # =========================================================
 
-        # Top-right soft blue area
-        pdf.setFillColor(colors.HexColor("#EEF5FF"))
+        # =========================================================
+        # 12. OUTER BORDER
+        # =========================================================
+        pdf.setStrokeColor(navy)
+        pdf.setLineWidth(2)
+        pdf.rect(
+            15 * mm,
+            15 * mm,
+            page_width - 30 * mm,
+            page_height - 30 * mm,
+            fill=0,
+            stroke=1
+        )
+
+
+        # Inner border
+        pdf.setStrokeColor(border)
+        pdf.setLineWidth(0.7)
+        pdf.rect(
+            19 * mm,
+            19 * mm,
+            page_width - 38 * mm,
+            page_height - 38 * mm,
+            fill=0,
+            stroke=1
+        )
+
+
+        # =========================================================
+        # 13. TOP BLUE LINE
+        # =========================================================
+        pdf.setFillColor(navy)
         pdf.roundRect(
-            width - 115 * mm,
-            height - 58 * mm,
-            105 * mm,
-            45 * mm,
-            8 * mm,
+            30 * mm,
+            page_height - 30 * mm,
+            page_width - 60 * mm,
+            3 * mm,
+            1.5 * mm,
             fill=1,
             stroke=0
         )
 
-        # Top-right blue diagonal strips
-        pdf.saveState()
-        pdf.setFillColor(colors.HexColor("#1769E8"))
-        pdf.translate(width - 10 * mm, height - 10 * mm)
-        pdf.rotate(45)
-        pdf.rect(
-            -10 * mm,
-            -5 * mm,
-            42 * mm,
-            8 * mm,
-            fill=1,
-            stroke=0
-        )
-        pdf.restoreState()
-
-        pdf.saveState()
-        pdf.setFillColor(colors.HexColor("#10245A"))
-        pdf.translate(width - 3 * mm, height - 3 * mm)
-        pdf.rotate(45)
-        pdf.rect(
-            -8 * mm,
-            -3 * mm,
-            38 * mm,
-            5 * mm,
-            fill=1,
-            stroke=0
-        )
-        pdf.restoreState()
-
-        # Bottom-left soft decoration
-        pdf.setFillColor(colors.HexColor("#F1F6FF"))
-        pdf.circle(
-            18 * mm,
-            16 * mm,
-            35 * mm,
-            fill=1,
-            stroke=0
-        )
-
-        # Bottom-left diagonal blue strips
-        pdf.saveState()
-        pdf.setFillColor(colors.HexColor("#1769E8"))
-        pdf.translate(0, 0)
-        pdf.rotate(45)
-        pdf.rect(
-            -5 * mm,
-            0,
-            50 * mm,
-            7 * mm,
-            fill=1,
-            stroke=0
-        )
-        pdf.restoreState()
-
-        pdf.saveState()
-        pdf.setFillColor(colors.HexColor("#10245A"))
-        pdf.translate(0, 0)
-        pdf.rotate(45)
-        pdf.rect(
-            -8 * mm,
-            8 * mm,
-            45 * mm,
-            5 * mm,
-            fill=1,
-            stroke=0
-        )
-        pdf.restoreState()
 
         # =========================================================
-        # PREMIUM BORDER
-        # =========================================================
-        pdf.setStrokeColor(border_blue)
-        pdf.setLineWidth(0.9)
-
-        pdf.rect(
-            8 * mm,
-            8 * mm,
-            width - 16 * mm,
-            height - 16 * mm,
-            fill=0,
-            stroke=1
-        )
-
-        pdf.setStrokeColor(
-            colors.HexColor("#D7E5FA")
-        )
-        pdf.setLineWidth(0.5)
-
-        pdf.rect(
-            11 * mm,
-            11 * mm,
-            width - 22 * mm,
-            height - 22 * mm,
-            fill=0,
-            stroke=1
-        )
-
-        # =========================================================
-        # TOP LEFT — HACKATHON BRANDING
+        # 14. COLLEGE LOGO
         # =========================================================
         logo_path = os.path.join(
             app.root_path,
@@ -1719,551 +1745,409 @@ def download_certificate(certificate_id):
             "college-logo.png"
         )
 
-        # College logo
         if os.path.exists(logo_path):
             try:
-                from reportlab.lib.utils import ImageReader
-
-                logo = ImageReader(logo_path)
-
                 pdf.drawImage(
-
-
-                    logo,
-                    105 * mm,
-                    height - 38 * mm,
-                    width=22 * mm,
-                    height=22 * mm,
+                    logo_path,
+                    28 * mm,
+                    page_height - 48 * mm,
+                    width=24 * mm,
+                    height=24 * mm,
                     preserveAspectRatio=True,
-                    anchor="c",
                     mask="auto"
                 )
-
             except Exception:
-                app.logger.exception(
-                    "CERTIFICATE LOGO ERROR"
-                )
+                pass
 
-        # Hackathon branding text
+
+        # =========================================================
+        # 15. HACKATHON BRANDING
+        # =========================================================
         pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            8.5
-        )
+        pdf.setFont("Helvetica-Bold", 13)
 
         pdf.drawString(
-            39 * mm,
-            height - 18 * mm,
-            "Community-Based"
+            56 * mm,
+            page_height - 35 * mm,
+            "COMMUNITY HACKATHON"
         )
 
-        pdf.setFont(
+        pdf.setFillColor(blue)
+        pdf.setFont("Helvetica", 8.5)
+
+        pdf.drawString(
+            56 * mm,
+            page_height - 41 * mm,
+            "INNOVATE  •  BUILD  •  CREATE IMPACT"
+        )
+
+
+        # =========================================================
+        # 16. COLLEGE NAME
+        # =========================================================
+        pdf.setFillColor(dark_text)
+        pdf.setFont("Helvetica-Bold", 9.5)
+
+        pdf.drawRightString(
+            page_width - 30 * mm,
+            page_height - 35 * mm,
+            "ANNASAHEB VARTAK COLLEGE"
+        )
+
+        pdf.setFont("Helvetica", 8)
+
+        pdf.setFillColor(grey)
+
+        pdf.drawRightString(
+            page_width - 30 * mm,
+            page_height - 41 * mm,
+            "Vasai West, Maharashtra"
+        )
+
+
+        # =========================================================
+        # 17. CERTIFICATE TITLE
+        # =========================================================
+        title_y = page_height - 67 * mm
+
+        pdf.setFillColor(navy)
+        pdf.setFont("Helvetica-Bold", 25)
+
+        pdf.drawCentredString(
+            page_width / 2,
+            title_y,
+            "CERTIFICATE"
+        )
+
+        pdf.setFillColor(blue)
+        pdf.setFont("Helvetica-Bold", 10)
+
+        pdf.drawCentredString(
+            page_width / 2,
+            title_y - 8 * mm,
+            "OF PARTICIPATION"
+        )
+
+
+        # =========================================================
+        # 18. PARTICIPATION TEXT
+        # =========================================================
+        pdf.setFillColor(grey)
+        pdf.setFont("Helvetica", 9.5)
+
+        pdf.drawCentredString(
+            page_width / 2,
+            title_y - 20 * mm,
+            "This certificate is proudly presented to"
+        )
+
+
+        # =========================================================
+        # 19. PARTICIPANT NAME
+        # =========================================================
+        pdf.setFillColor(navy)
+        pdf.setFont("Helvetica-Bold", 22)
+
+        pdf.drawCentredString(
+            page_width / 2,
+            title_y - 32 * mm,
+            participant_name
+        )
+
+        # underline
+        name_width = pdf.stringWidth(
+            participant_name,
             "Helvetica-Bold",
             22
         )
 
-        pdf.drawString(
-            39 * mm,
-            height - 27 * mm,
-            "Hackathon"
-        )
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            9
-        )
-
-        pdf.drawString(
-            39 * mm,
-            height - 34 * mm,
-            "for Social Innovation"
-        )
-
-        # Small divider
         pdf.setStrokeColor(blue)
         pdf.setLineWidth(1)
 
         pdf.line(
-            97 * mm,
-            height - 14 * mm,
-            97 * mm,
-            height - 39 * mm
+            (page_width - name_width) / 2,
+            title_y - 34 * mm,
+            (page_width + name_width) / 2,
+            title_y - 34 * mm
         )
 
-        # College name
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            13
-        )
-
-        pdf.drawString(
-            132 * mm,
-            height - 19 * mm,
-            "Annasaheb Vartak College"
-        )
-
-        pdf.setFont(
-            "Helvetica",
-            10
-        )
-
-        pdf.drawString(
-            132 * mm,
-            height - 27 * mm,
-            "Vasai West"
-        )
 
         # =========================================================
-        # TOP RIGHT TAGLINE
-        # =========================================================
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            6.5
-        )
-
-        pdf.drawRightString(
-            width - 24 * mm,
-            height - 14 * mm,
-            "INNOVATE  /  BUILD  /  CREATE IMPACT"
-        )
-
-        # =========================================================
-        # MAIN TITLE
-        # =========================================================
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            31
-        )
-
-        pdf.drawCentredString(
-            width / 2,
-            height - 53 * mm,
-            "CERTIFICATE"
-        )
-
-        # Subtitle
-        pdf.setFillColor(blue)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            11
-        )
-
-        pdf.drawCentredString(
-            width / 2,
-            height - 62 * mm,
-            "O F   P A R T I C I P A T I O N"
-        )
-
-        # Subtitle lines
-        pdf.setStrokeColor(blue)
-        pdf.setLineWidth(0.8)
-
-        pdf.line(
-            61 * mm,
-            height - 59 * mm,
-            91 * mm,
-            height - 59 * mm
-        )
-
-        pdf.line(
-            width - 91 * mm,
-            height - 59 * mm,
-            width - 61 * mm,
-            height - 59 * mm
-        )
-
-        # =========================================================
-        # INTRO
+        # 20. DESCRIPTION
         # =========================================================
         pdf.setFillColor(dark_text)
-
-        pdf.setFont(
-            "Helvetica",
-            10
-        )
+        pdf.setFont("Helvetica", 9)
 
         pdf.drawCentredString(
-            width / 2,
-            height - 74 * mm,
-            "This is to certify that"
-        )
-
-        # =========================================================
-        # PARTICIPANT NAME
-        # =========================================================
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            25
-        )
-
-        # Keep long names inside the certificate
-        name_font = 25
-
-        if len(participant_name) > 25:
-            name_font = 21
-        elif len(participant_name) > 20:
-            name_font = 23
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            name_font
-        )
-
-        pdf.drawCentredString(
-            width / 2,
-            height - 88 * mm,
-            participant_name
-        )
-
-        # Name underline
-        pdf.setStrokeColor(blue)
-        pdf.setLineWidth(0.8)
-
-        pdf.line(
-            75 * mm,
-            height - 94 * mm,
-            width - 75 * mm,
-            height - 94 * mm
-        )
-
-        # Small diamond
-        pdf.setFillColor(blue)
-
-        diamond_x = width / 2
-        diamond_y = height - 94 * mm
-        diamond_size = 2.2 * mm
-
-        pdf.saveState()
-        pdf.translate(
-            diamond_x,
-            diamond_y
-        )
-        pdf.rotate(45)
-        pdf.rect(
-            -diamond_size / 2,
-            -diamond_size / 2,
-            diamond_size,
-            diamond_size,
-            fill=1,
-            stroke=0
-        )
-        pdf.restoreState()
-
-        # =========================================================
-        # DESCRIPTION
-        # =========================================================
-        pdf.setFillColor(dark_text)
-
-        pdf.setFont(
-            "Helvetica",
-            9.5
-        )
-
-        pdf.drawCentredString(
-            width / 2,
-            height - 103 * mm,
-            "has successfully participated in the"
+            page_width / 2,
+            title_y - 43 * mm,
+            "for successfully participating in the"
         )
 
         pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            12
-        )
+        pdf.setFont("Helvetica-Bold", 10)
 
         pdf.drawCentredString(
-            width / 2,
-            height - 111 * mm,
-            "Community-Based Hackathon for Social Innovation"
+            page_width / 2,
+            title_y - 49 * mm,
+            event_name
         )
 
-        pdf.setFillColor(dark_text)
-
-        pdf.setFont(
-            "Helvetica",
-            8.5
-        )
-
-        pdf.drawCentredString(
-            width / 2,
-            height - 118 * mm,
-            "and contributed towards creating innovative solutions for a better tomorrow."
-        )
 
         # =========================================================
-        # INFORMATION CARDS
+        # 21. INFORMATION CARDS
         # =========================================================
-        card_y = 34 * mm
-        card_h = 27 * mm
-        card_w = 63 * mm
-        gap = 7 * mm
+        card_y = 58 * mm
+        card_height = 24 * mm
+        card_gap = 7 * mm
 
-        total_cards_width = (
-            3 * card_w
-            + 2 * gap
-        )
-
-        start_x = (
-            width - total_cards_width
-        ) / 2
-
-        event_name = "Community Hackathon 2026"
+        total_card_width = page_width - 70 * mm
+        card_width = (
+            total_card_width - (2 * card_gap)
+        ) / 3
 
         cards = [
-            (
-                "Team",
-                certificate["team_name"] or "N/A",
-                blue
-            ),
-            (
-                "Problem Statement",
-                certificate["problem_statement"] or "N/A",
-                blue
-            ),
-            (
-                "Event",
-                event_name,
-                blue
-            )
+            ("TEAM", team_name),
+            ("PROBLEM STATEMENT", problem_statement),
+            ("EVENT", event_name)
         ]
 
-        for i, (label, value, accent) in enumerate(cards):
+        start_x = 35 * mm
 
-            x = start_x + i * (
-                card_w + gap
-            )
+        for index, (label, value) in enumerate(cards):
+
+            x = start_x + index * (card_width + card_gap)
 
             # Card background
-            pdf.setFillColor(
-                very_light_blue
-            )
+            pdf.setFillColor(light_blue)
 
             pdf.roundRect(
                 x,
                 card_y,
-                card_w,
-                card_h,
+                card_width,
+                card_height,
                 4 * mm,
                 fill=1,
                 stroke=0
             )
 
-            # Vertical separator
-            if i > 0:
-                pdf.setStrokeColor(
-                    colors.HexColor("#9EBBEF")
-                )
+            # Card border
+            pdf.setStrokeColor(border)
+            pdf.setLineWidth(0.7)
 
-                pdf.setLineWidth(0.7)
-
-                pdf.line(
-                    x - gap / 2,
-                    card_y + 5 * mm,
-                    x - gap / 2,
-                    card_y + card_h - 5 * mm
-                )
+            pdf.roundRect(
+                x,
+                card_y,
+                card_width,
+                card_height,
+                4 * mm,
+                fill=0,
+                stroke=1
+            )
 
             # Label
-            pdf.setFillColor(
-                accent
-            )
+            pdf.setFillColor(blue)
+            pdf.setFont("Helvetica-Bold", 7.5)
 
-            pdf.setFont(
-                "Helvetica-Bold",
-                6.8
-            )
-
-            pdf.drawString(
-                x + 6 * mm,
-                card_y + 18 * mm,
+            pdf.drawCentredString(
+                x + card_width / 2,
+                card_y + 16 * mm,
                 label
             )
 
             # Value
-            pdf.setFillColor(
-                navy
-            )
+            pdf.setFillColor(dark_text)
+            pdf.setFont("Helvetica-Bold", 8.5)
 
-            value_text = str(value)
+            display_value = str(value)
 
-            value_font = 8.5
+            max_chars = 32
 
-            if len(value_text) > 27:
-                value_font = 7.5
-
-            if len(value_text) > 38:
-                value_text = (
-                    value_text[:35]
+            if len(display_value) > max_chars:
+                display_value = (
+                    display_value[:max_chars - 3]
                     + "..."
                 )
 
-            pdf.setFont(
-                "Helvetica-Bold",
-                value_font
+            pdf.drawCentredString(
+                x + card_width / 2,
+                card_y + 8 * mm,
+                display_value
             )
 
-            pdf.drawString(
-                x + 6 * mm,
-                card_y + 9 * mm,
-                value_text
-            )
 
         # =========================================================
-        # SIGNATURE SECTION
+        # 22. SIGNATURES
         # =========================================================
+        signature_y = 32 * mm
 
-        # Left signature
-        left_sig_x1 = 43 * mm
-        left_sig_x2 = 93 * mm
-        left_sig_center = (
-            left_sig_x1 + left_sig_x2
-        ) / 2
+        left_signature_x = 58 * mm
+        right_signature_x = page_width - 58 * mm
 
-        pdf.setStrokeColor(
-            colors.HexColor("#5577B9")
+        meenal_signature = os.path.join(
+            app.root_path,
+            "static",
+            "assets",
+            "meenal-signature.png"
         )
-        pdf.setLineWidth(0.7)
+
+        rohan_signature = os.path.join(
+            app.root_path,
+            "static",
+            "assets",
+            "rohan-signature.png"
+        )
+
+        # Meenal signature
+        if os.path.exists(meenal_signature):
+            try:
+                pdf.drawImage(
+                    meenal_signature,
+                    left_signature_x - 22 * mm,
+                    signature_y + 5 * mm,
+                    width=44 * mm,
+                    height=13 * mm,
+                    preserveAspectRatio=True,
+                    mask="auto"
+                )
+            except Exception:
+                pass
+
+        # Rohan signature
+        if os.path.exists(rohan_signature):
+            try:
+                pdf.drawImage(
+                    rohan_signature,
+                    right_signature_x - 22 * mm,
+                    signature_y + 5 * mm,
+                    width=44 * mm,
+                    height=13 * mm,
+                    preserveAspectRatio=True,
+                    mask="auto"
+                )
+            except Exception:
+                pass
+
+
+        # Signature lines
+        pdf.setStrokeColor(grey)
+        pdf.setLineWidth(0.6)
 
         pdf.line(
-            left_sig_x1,
-            23 * mm,
-            left_sig_x2,
-            23 * mm
+            left_signature_x - 25 * mm,
+            signature_y + 3 * mm,
+            left_signature_x + 25 * mm,
+            signature_y + 3 * mm
         )
 
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            7.5
+        pdf.line(
+            right_signature_x - 25 * mm,
+            signature_y + 3 * mm,
+            right_signature_x + 25 * mm,
+            signature_y + 3 * mm
         )
+
+
+        # Signature names
+        pdf.setFillColor(dark_text)
+        pdf.setFont("Helvetica-Bold", 8)
 
         pdf.drawCentredString(
-            left_sig_center,
-            17 * mm,
+            left_signature_x,
+            signature_y - 2 * mm,
             "Dr. Meenal Deshpande"
         )
 
-        pdf.setFillColor(muted)
-
-        pdf.setFont(
-            "Helvetica",
-            6.5
-        )
-
         pdf.drawCentredString(
-            left_sig_center,
-            13 * mm,
-            "Event Coordinator"
-        )
-
-        # Signature handwriting style
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Times-Italic",
-            14
-        )
-
-        pdf.drawCentredString(
-            left_sig_center,
-            25 * mm,
-            "Meenal"
-        )
-
-        # Right signature
-        right_sig_x1 = 108 * mm
-        right_sig_x2 = 158 * mm
-        right_sig_center = (
-            right_sig_x1 + right_sig_x2
-        ) / 2
-
-        pdf.setStrokeColor(
-            colors.HexColor("#5577B9")
-        )
-
-        pdf.line(
-            right_sig_x1,
-            23 * mm,
-            right_sig_x2,
-            23 * mm
-        )
-
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            7.5
-        )
-
-        pdf.drawCentredString(
-            right_sig_center,
-            17 * mm,
+            right_signature_x,
+            signature_y - 2 * mm,
             "Prof. Rohan Kulkarni"
         )
 
-        pdf.setFillColor(muted)
 
-        pdf.setFont(
-            "Helvetica",
-            6.5
+        # Designations
+        pdf.setFillColor(grey)
+        pdf.setFont("Helvetica", 7)
+
+        pdf.drawCentredString(
+            left_signature_x,
+            signature_y - 6 * mm,
+            "Event Coordinator"
         )
 
         pdf.drawCentredString(
-            right_sig_center,
-            13 * mm,
+            right_signature_x,
+            signature_y - 6 * mm,
             "Head of Department"
         )
 
-        pdf.setFillColor(navy)
-
-        pdf.setFont(
-            "Times-Italic",
-            14
-        )
-
-        pdf.drawCentredString(
-            right_sig_center,
-            25 * mm,
-            "Rohan"
-        )
 
         # =========================================================
-        # QR CODE + CERTIFICATE ID
+        # 23. DATE OF ISSUE
         # =========================================================
+        pdf.setFillColor(grey)
+        pdf.setFont("Helvetica", 7)
+
+        pdf.drawString(
+            30 * mm,
+            22 * mm,
+            "DATE OF ISSUE"
+        )
+
+        pdf.setFillColor(dark_text)
+        pdf.setFont("Helvetica-Bold", 8)
+
+        pdf.drawString(
+            30 * mm,
+            17.5 * mm,
+            issued_date
+        )
+
+
+        # =========================================================
+        # 24. CERTIFICATE ID
+        # =========================================================
+        pdf.setFillColor(grey)
+        pdf.setFont("Helvetica", 7)
+
+        pdf.drawRightString(
+            page_width - 30 * mm,
+            22 * mm,
+            "CERTIFICATE ID"
+        )
+
+        pdf.setFillColor(dark_text)
+        pdf.setFont("Helvetica-Bold", 8)
+
+        pdf.drawRightString(
+            page_width - 30 * mm,
+            17.5 * mm,
+            actual_certificate_id
+        )
+
+
+        # =========================================================
+        # 25. QR CODE
+        # =========================================================
+        qr_value = (
+            f"Certificate ID: {actual_certificate_id}\n"
+            f"Participant: {participant_name}\n"
+            f"Team: {team_name}\n"
+            f"Problem: {problem_statement}\n"
+            f"Event: {event_name}"
+        )
+
         try:
-            from reportlab.graphics.barcode.qr import (
-                QrCodeWidget
-            )
+            from reportlab.graphics.barcode.qr import QrCodeWidget
             from reportlab.graphics.shapes import Drawing
             from reportlab.graphics import renderPDF
 
-            verification_url = (
-                request.url_root.rstrip("/")
-                + url_for(
-                    "download_certificate",
-                    certificate_id=certificate[
-                        "certificate_id"
-                    ]
-                )
-            )
+            qr = QrCodeWidget(qr_value)
 
-            qr = QrCodeWidget(
-                verification_url
-            )
+            qr_size = 18 * mm
 
-            qr_size = 21 * mm
+            qr.barWidth = qr_size
+            qr.barHeight = qr_size
 
             drawing = Drawing(
                 qr_size,
@@ -2272,787 +2156,54 @@ def download_certificate(certificate_id):
 
             drawing.add(qr)
 
-            qr_x = 194 * mm
-            qr_y = 16 * mm
-
             renderPDF.draw(
                 drawing,
                 pdf,
-                qr_x,
-                qr_y
-            )
-
-            pdf.setFillColor(
-                navy
-            )
-
-            pdf.setFont(
-                "Helvetica-Bold",
-                7
-            )
-
-            pdf.drawString(
-                218 * mm,
-                27 * mm,
-                "Certificate ID"
-            )
-
-            pdf.setFont(
-                "Helvetica-Bold",
-                8
-            )
-
-            pdf.drawString(
-                218 * mm,
-                21 * mm,
-                certificate["certificate_id"]
-            )
-
-            pdf.setFillColor(
-                muted
-            )
-
-            pdf.setFont(
-                "Helvetica",
-                6.2
-            )
-
-            pdf.drawString(
-                218 * mm,
-                15 * mm,
-                "Scan to verify"
-            )
-
-            pdf.drawString(
-                218 * mm,
-                11 * mm,
-                "or visit the verification page"
+                page_width / 2 - qr_size / 2,
+                17 * mm
             )
 
         except Exception:
-            app.logger.exception(
-                "CERTIFICATE QR ERROR"
-            )
+            pass
+
 
         # =========================================================
-        # DATE OF ISSUE
-        # =========================================================
-        issue_date = (
-            session.get("login_date")
-            or (
-                certificate["issued_at"].strftime(
-                    "%d %B %Y"
-                )
-                if certificate["issued_at"]
-                else "N/A"
-            )
-        )
-
-        pdf.setFillColor(
-            navy
-        )
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            6.5
-        )
-
-        pdf.drawString(
-            71 * mm,
-            22 * mm,
-            "Date of Issue"
-        )
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            7.5
-        )
-
-        pdf.drawString(
-            71 * mm,
-            16 * mm,
-            issue_date
-        )
-
-        # =========================================================
-        # ORGANIZED BY
-        # =========================================================
-        pdf.setFillColor(
-            navy
-        )
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            6.5
-        )
-
-        pdf.drawString(
-            127 * mm,
-            22 * mm,
-            "Organized by"
-        )
-
-        pdf.setFont(
-            "Helvetica-Bold",
-            7
-        )
-
-        pdf.drawString(
-            127 * mm,
-            16 * mm,
-            "Annasaheb Vartak College, Vasai West"
-        )
-
-        # =========================================================
-        # BOTTOM RIGHT TAGLINE
-        # =========================================================
-        pdf.setFillColor(
-            navy
-        )
-
-        pdf.setFont(
-            "Times-Italic",
-            9
-        )
-
-        pdf.drawString(
-            218 * mm,
-            16 * mm,
-            "Ideas today. Impact tomorrow."
-        )
-
-        pdf.setStrokeColor(
-            colors.HexColor("#8BA9DB")
-        )
-
-        pdf.setLineWidth(0.7)
-
-        pdf.line(
-            268 * mm,
-            17 * mm,
-            285 * mm,
-            17 * mm
-        )
-
-        # =========================================================
-        # FINISH PDF
+        # 26. FINISH PDF
         # =========================================================
         pdf.showPage()
         pdf.save()
 
         buffer.seek(0)
 
+
+        # =========================================================
+        # 27. DOWNLOAD
+        # =========================================================
         return send_file(
             buffer,
             as_attachment=True,
-            download_name=f"{certificate_id}.pdf",
+            download_name=f"{actual_certificate_id}.pdf",
             mimetype="application/pdf"
         )
 
-    finally:
-        cursor.close()
-        conn.close()
-@app.route("/admin/login", methods=["GET", "POST"])
-@limiter.limit("10 per minute", methods=["POST"])
-def admin_login():
-    if request.method == "GET":
-        if session.get("admin_id"):
-            return redirect(url_for("admin_dashboard"))
-        return render_template("admin-login.html")
 
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "")
+    except Exception as e:
 
-    if not email or not password or len(email) > 150 or len(password) > 200:
-        flash("Invalid admin credentials.", "error")
-        return redirect(url_for("admin_login"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute("SELECT * FROM admins WHERE email = %s", (email,))
-        admin = cursor.fetchone()
-        if admin and check_password_hash(admin["password_hash"], password):
-            session.clear()
-            session["admin_id"] = admin["id"]
-            session["admin_name"] = admin["name"]
-            flash("Admin login successful.", "success")
-            return redirect(url_for("admin_dashboard"))
-        flash("Invalid admin credentials.", "error")
-        return redirect(url_for("admin_login"))
-    except Exception:
         conn.rollback()
-        app.logger.exception("ADMIN LOGIN ERROR")
-        flash("Unable to log in right now. Please try again.", "error")
-        return redirect(url_for("admin_login"))
-    finally:
-        cursor.close()
-        conn.close()
 
-@app.route("/admin/signup", methods=["GET", "POST"])
-@limiter.limit("5 per minute", methods=["POST"])
-def admin_signup():
-
-    if request.method == "GET":
-        if session.get("admin_id"):
-            return redirect(url_for("admin_dashboard"))
-
-        return render_template("admin-signup.html")
-
-    name = request.form.get("name", "").strip()
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "")
-    confirm_password = request.form.get("confirm_password", "")
-
-    if not name or not email or not password:
-        flash("Please fill all required fields.", "error")
-        return redirect(url_for("admin_signup"))
-
-    if not validate_email(email):
-        flash("Please enter a valid email address.", "error")
-        return redirect(url_for("admin_signup"))
-
-    if len(name) > 100 or len(email) > 150:
-        flash("Name or email is too long.", "error")
-        return redirect(url_for("admin_signup"))
-
-    if password != confirm_password:
-        flash("Passwords do not match.", "error")
-        return redirect(url_for("admin_signup"))
-
-    if len(password) < 6 or len(password) > 200:
-        flash("Password must be between 6 and 200 characters.", "error")
-        return redirect(url_for("admin_signup"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-
-    try:
-        cursor.execute(
-            "SELECT id FROM admins WHERE email = %s",
-            (email,)
+        app.logger.exception(
+            "CERTIFICATE DOWNLOAD ERROR"
         )
 
-        existing_admin = cursor.fetchone()
-
-        if existing_admin:
-            flash("An admin with this email already exists.", "error")
-            return redirect(url_for("admin_signup"))
-
-        password_hash = generate_password_hash(password)
-
-        cursor.execute(
-            """
-            INSERT INTO admins (name, email, password_hash)
-            VALUES (%s, %s, %s)
-            """,
-            (name, email, password_hash)
-        )
-
-        conn.commit()
-
-        flash("Admin account created successfully. Please login.", "success")
-        return redirect(url_for("admin_login"))
-
-    except Exception:
-        conn.rollback()
-        app.logger.exception("ADMIN SIGNUP ERROR")
-        flash("Error creating admin account. Please try again.", "error")
-        return redirect(url_for("admin_signup"))
+        return f"""
+        <h2>Certificate Generation Error</h2>
+        <pre>{e}</pre>
+        """, 500
 
     finally:
+
         cursor.close()
         conn.close()
-
-@app.route("/admin/logout")
-def admin_logout():
-    session.clear()
-    flash("Admin logged out.", "success")
-    return redirect(url_for("admin_login"))
-
-
-@app.route("/admin/dashboard")
-@admin_required
-def admin_dashboard():
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        stats = {}
-        for table, key in [
-            ("users", "total_users"),
-            ("teams", "total_teams"),
-            ("registrations", "total_registrations"),
-            ("problem_statements", "total_problems"),
-            ("contact_messages", "total_messages"),
-        ]:
-            cursor.execute(f"SELECT COUNT(*) AS cnt FROM {table}")
-            stats[key] = cursor.fetchone()["cnt"]
-
-        cursor.execute("SELECT COUNT(*) AS cnt FROM judges_mentors WHERE type='Judge'")
-        stats["total_judges"] = cursor.fetchone()["cnt"]
-        cursor.execute("SELECT COUNT(*) AS cnt FROM judges_mentors WHERE type='Mentor'")
-        stats["total_mentors"] = cursor.fetchone()["cnt"]
-        cursor.execute("SELECT COUNT(*) AS cnt FROM contact_messages WHERE is_read=0")
-        stats["unread_messages"] = cursor.fetchone()["cnt"]
-
-        cursor.execute(
-            """
-            SELECT u.id, u.name, u.email, u.created_at
-            FROM users u ORDER BY u.created_at DESC LIMIT 50
-            """
-        )
-        users = cursor.fetchall()
-
-        cursor.execute(
-            """
-            SELECT t.*, ps.title AS problem_title, r.status, r.registration_id,
-                   (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) AS extra_members
-            FROM teams t
-            JOIN problem_statements ps ON ps.id = t.problem_statement_id
-            LEFT JOIN registrations r ON r.team_id = t.id
-            ORDER BY t.created_at DESC
-            """
-        )
-        teams = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM problem_statements ORDER BY id")
-        problems = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM judges_mentors ORDER BY type, name")
-        judges_mentors_list = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM events ORDER BY event_date, event_time")
-        events_list = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM faqs ORDER BY id")
-        faqs_list = cursor.fetchall()
-
-        cursor.execute(
-            "SELECT * FROM contact_messages ORDER BY created_at DESC"
-        )
-        messages = cursor.fetchall()
-
-                # Certificates
-        cursor.execute(
-            """
-            SELECT
-                c.id,
-                c.certificate_id,
-                c.certificate_type,
-                c.position,
-                c.team_name,
-                c.problem_statement,
-                c.issued_at,
-                u.name AS user_name,
-                u.email AS user_email
-            FROM certificates c
-            JOIN users u ON u.id = c.user_id
-            ORDER BY c.issued_at DESC
-            """
-        )
-        certificates = cursor.fetchall()
-
-        return render_template(
-            "admin-dashboard.html",
-            stats=stats,
-            users=users,
-            teams=teams,
-            problems=problems,
-            judges_mentors=judges_mentors_list,
-            events=events_list,
-            faqs=faqs_list,
-            messages=messages,
-            admin_name=session.get("admin_name"),
-                        certificates=certificates,
-        )
-    finally:
-        cursor.close()
-        conn.close()
-
-# =========================
-# Admin Certificate Route
-# =========================
-
-@app.route("/admin/issue-certificate", methods=["POST"])
-@admin_required
-def admin_issue_certificate():
-
-    user_id = request.form.get("user_id", "").strip()
-    certificate_type = request.form.get("certificate_type", "Participation").strip()
-    position = request.form.get("position", "").strip()
-
-    if not user_id:
-        flash("Please select a user.", "error")
-        return redirect(url_for("admin_dashboard"))
-
-    if certificate_type not in ["Participation", "Winner"]:
-        flash("Invalid certificate type.", "error")
-        return redirect(url_for("admin_dashboard"))
-
-    if certificate_type == "Winner" and not position:
-        flash("Please enter the winner position.", "error")
-        return redirect(url_for("admin_dashboard"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-
-    try:
-        # Check user
-        cursor.execute(
-            """
-            SELECT id, name, email
-            FROM users
-            WHERE id = %s
-            LIMIT 1
-            """,
-            (user_id,)
-        )
-
-        user = cursor.fetchone()
-
-        if not user:
-            flash("User not found.", "error")
-            return redirect(url_for("admin_dashboard"))
-
-        # Get user's team and selected problem
-        cursor.execute(
-            """
-            SELECT
-                t.team_name,
-                ps.title AS problem_title
-            FROM teams t
-            LEFT JOIN problem_statements ps
-                ON t.problem_statement_id = ps.id
-            WHERE t.user_id = %s
-            ORDER BY t.id DESC
-            LIMIT 1
-            """,
-            (user_id,)
-        )
-
-        team = cursor.fetchone()
-
-        team_name = team["team_name"] if team else None
-        problem_statement = team["problem_title"] if team else None
-
-        # Generate unique certificate ID
-        cursor.execute(
-            "SELECT COUNT(*) AS total FROM certificates"
-        )
-
-        result = cursor.fetchone()
-        total = (result["total"] or 0) + 1
-
-        certificate_id = f"CERT-HACK2026-{total:05d}"
-
-        # Make sure ID is unique
-        while True:
-            cursor.execute(
-                """
-                SELECT id
-                FROM certificates
-                WHERE certificate_id = %s
-                LIMIT 1
-                """,
-                (certificate_id,)
-            )
-
-            existing = cursor.fetchone()
-
-            if not existing:
-                break
-
-            total += 1
-            certificate_id = f"CERT-HACK2026-{total:05d}"
-
-        # Insert certificate
-        cursor.execute(
-            """
-            INSERT INTO certificates
-            (
-                user_id,
-                certificate_id,
-                certificate_type,
-                position,
-                team_name,
-                problem_statement
-            )
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (
-                user_id,
-                certificate_id,
-                certificate_type,
-                position if certificate_type == "Winner" else None,
-                team_name,
-                problem_statement
-            )
-        )
-
-        conn.commit()
-
-        flash(
-            f"Certificate {certificate_id} issued successfully to {user['name']}.",
-            "success"
-        )
-
-    except Exception:
-        conn.rollback()
-        app.logger.exception("ISSUE CERTIFICATE ERROR")
-        flash(
-            "Error issuing certificate. Please check the details and try again.",
-            "error"
-        )
-
-    finally:
-        cursor.close()
-        conn.close()
-
-    return redirect(url_for("admin_dashboard"))
-# --- Admin CRUD: Users ---
-
-@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
-@admin_required
-def admin_delete_user(user_id):
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
-        conn.commit()
-        flash("User deleted.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("DELETE USER ERROR")
-        flash("Unable to delete user. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-# --- Admin CRUD: Problem Statements ---
-
-@app.route("/admin/problems/add", methods=["POST"])
-@admin_required
-def admin_add_problem():
-    title = request.form.get("title", "").strip()
-    category = request.form.get("category", "").strip()
-    description = request.form.get("description", "").strip()
-    difficulty = request.form.get("difficulty", "Medium").strip()
-    technologies = request.form.get("technologies", "").strip()
-    social_impact = request.form.get("social_impact", "").strip()
-
-    error = require_admin_fields(
-        {"title": title, "category": category, "description": description},
-        max_length=2000,
-    )
-    if error:
-        flash(error, "error")
-        return redirect(url_for("admin_dashboard"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute(
-            """
-            INSERT INTO problem_statements
-            (title, category, description, difficulty, technologies, social_impact)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (title, category, description, difficulty, technologies, social_impact),
-        )
-        conn.commit()
-        flash("Problem statement added.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("ADD PROBLEM ERROR")
-        flash("Unable to add problem statement. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-@app.route("/admin/problems/<int:pid>/edit", methods=["POST"])
-@admin_required
-def admin_edit_problem(pid):
-    title = request.form.get("title", "").strip()
-    category = request.form.get("category", "").strip()
-    description = request.form.get("description", "").strip()
-    difficulty = request.form.get("difficulty", "").strip()
-    technologies = request.form.get("technologies", "").strip()
-    social_impact = request.form.get("social_impact", "").strip()
-
-    error = require_admin_fields(
-        {"title": title, "category": category, "description": description},
-        max_length=2000,
-    )
-    if error:
-        flash(error, "error")
-        return redirect(url_for("admin_dashboard"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute(
-            """
-            UPDATE problem_statements SET title=%s, category=%s, description=%s,
-            difficulty=%s, technologies=%s, social_impact=%s WHERE id=%s
-            """,
-            (title, category, description, difficulty, technologies, social_impact, pid),
-        )
-        conn.commit()
-        flash("Problem statement updated.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("EDIT PROBLEM ERROR")
-        flash("Unable to update problem statement. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-@app.route("/admin/problems/<int:pid>/delete", methods=["POST"])
-@admin_required
-def admin_delete_problem(pid):
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        # Issue #7: a problem statement that has already been selected by a
-        # team cannot be removed without breaking referential integrity
-        # (teams.problem_statement_id has a foreign key with no cascade).
-        # Check for references first and give a clear message instead of
-        # letting the FK error bubble up as a raw 500.
-        cursor.execute(
-            "SELECT COUNT(*) AS cnt FROM teams WHERE problem_statement_id = %s",
-            (pid,),
-        )
-        in_use = cursor.fetchone()["cnt"] > 0
-
-        if in_use:
-            flash(
-                "This problem statement is already selected by one or more "
-                "registered teams and cannot be deleted. Edit it instead, "
-                "or reassign/remove the affected teams first.",
-                "error",
-            )
-            return redirect(url_for("admin_dashboard"))
-
-        cursor.execute("DELETE FROM problem_statements WHERE id = %s", (pid,))
-        conn.commit()
-        flash("Problem statement deleted.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("DELETE PROBLEM STATEMENT ERROR")
-        flash("Unable to delete this problem statement. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-# --- Admin CRUD: Judges & Mentors ---
-
-@app.route("/admin/judges-mentors/add", methods=["POST"])
-@admin_required
-def admin_add_judge_mentor():
-    name = request.form.get("name", "").strip()
-    role = request.form.get("role", "").strip()
-    organization = request.form.get("organization", "").strip()
-    expertise = request.form.get("expertise", "").strip()
-    experience = request.form.get("experience", "").strip()
-    bio = request.form.get("bio", "").strip()
-    image = request.form.get("image", "").strip()
-    jm_type = request.form.get("type", "").strip()
-
-    error = require_admin_fields({"name": name, "role": role, "type": jm_type})
-    if error:
-        flash(error, "error")
-        return redirect(url_for("admin_dashboard"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute(
-            """
-            INSERT INTO judges_mentors
-            (name, role, organization, expertise, experience, bio, image, type)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (name, role, organization, expertise, experience, bio, image, jm_type),
-        )
-        conn.commit()
-        flash("Judge/Mentor added.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("ADD JUDGE/MENTOR ERROR")
-        flash("Unable to add judge/mentor. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-@app.route("/admin/judges-mentors/<int:jid>/edit", methods=["POST"])
-@admin_required
-def admin_edit_judge_mentor(jid):
-    name = request.form.get("name", "").strip()
-    role = request.form.get("role", "").strip()
-    organization = request.form.get("organization", "").strip()
-    expertise = request.form.get("expertise", "").strip()
-    experience = request.form.get("experience", "").strip()
-    bio = request.form.get("bio", "").strip()
-    image = request.form.get("image", "").strip()
-    jm_type = request.form.get("type", "").strip()
-
-    error = require_admin_fields({"name": name, "role": role, "type": jm_type})
-    if error:
-        flash(error, "error")
-        return redirect(url_for("admin_dashboard"))
-
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute(
-            """
-            UPDATE judges_mentors SET name=%s, role=%s, organization=%s,
-            expertise=%s, experience=%s, bio=%s, image=%s, type=%s WHERE id=%s
-            """,
-            (name, role, organization, expertise, experience, bio, image, jm_type, jid),
-        )
-        conn.commit()
-        flash("Judge/Mentor updated.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("EDIT JUDGE/MENTOR ERROR")
-        flash("Unable to update judge/mentor. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-@app.route("/admin/judges-mentors/<int:jid>/delete", methods=["POST"])
-@admin_required
-def admin_delete_judge_mentor(jid):
-    conn = get_db_connection()
-    cursor = dict_cursor(conn)
-    try:
-        cursor.execute("DELETE FROM judges_mentors WHERE id = %s", (jid,))
-        conn.commit()
-        flash("Judge/Mentor deleted.", "success")
-    except Exception:
-        conn.rollback()
-        app.logger.exception("DELETE JUDGE/MENTOR ERROR")
-        flash("Unable to delete judge/mentor. Please try again.", "error")
-    finally:
-        cursor.close()
-        conn.close()
-    return redirect(url_for("admin_dashboard"))
-
-
-# --- Admin CRUD: Events ---
 
 @app.route("/admin/events/add", methods=["POST"])
 @admin_required
