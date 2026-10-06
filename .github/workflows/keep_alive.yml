@@ -2,23 +2,41 @@ name: Keep Render App Alive
 
 on:
   schedule:
-    # Run every 12 minutes (Render sleeps after 15 minutes of inactivity)
-    - cron: '*/12 * * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+    # Run every 12 minutes to keep the Render free instance active
+    - cron: "*/12 * * * *"
+
+  workflow_dispatch:
+    # Allows manual trigger from GitHub Actions
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
+
     steps:
       - name: Ping Render Service
-        env:
-          RENDER_URL: ${{ secrets.RENDER_APP_URL || 'https://community-hackathon.onrender.com' }}
         run: |
-          echo "Pinging Render service at $RENDER_URL/healthz..."
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_URL/healthz" || true)
+          URL="https://cep-z904.onrender.com/healthz"
+
+          echo "Pinging Render service..."
+          echo "URL: $URL"
+
+          RESPONSE=$(curl \
+            --location \
+            --silent \
+            --show-error \
+            --output /dev/null \
+            --write-out "%{http_code}" \
+            --max-time 90 \
+            --retry 2 \
+            --retry-delay 5 \
+            "$URL" || true)
+
           echo "HTTP response status: $RESPONSE"
+
           if [ "$RESPONSE" = "200" ]; then
             echo "Render service is awake and healthy!"
           else
-            echo "Received status $RESPONSE (service may still be waking up)"
+            echo "Render service returned HTTP $RESPONSE"
+            exit 1
           fi
